@@ -3,6 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Clock, PlusCircle, Trash2, ArrowLeft, HeartPulse } from "lucide-react";
 import { createAvailableSlot, deleteAvailableSlot } from "@/app/actions/appointment";
 
 interface Slot {
@@ -95,60 +97,69 @@ export default function DoctorAvailabilityPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center">
-        <div className="text-xl font-semibold">Loading Availability Manager...</div>
+      <div className="min-h-screen bg-[#FAF9F5] text-stone-700 flex items-center justify-center font-sans">
+        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border border-stone-200/80 shadow-warm-sm">
+          <HeartPulse className="w-5 h-5 text-[#042618] animate-pulse" />
+          <div className="text-sm font-semibold text-[#042618]">Loading Availability Manager...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6 sm:p-12 relative">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/5 blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#FAF9F5] text-stone-800 font-sans p-6 sm:p-10 relative">
+      <div className="absolute top-[-5%] right-[-5%] w-[45%] h-[45%] rounded-full bg-[#E0F2E7]/40 blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto z-10 relative">
-        <header className="flex items-center justify-between border-b border-slate-800 pb-8 mb-12">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6 mb-8">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">
-              Availability Manager
+            <div className="flex items-center gap-2 mb-1">
+              <Link 
+                href="/doctor/dashboard" 
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#042618] hover:text-[#0F3824] bg-[#E0F2E7]/70 hover:bg-[#E0F2E7] px-3 py-1 rounded-full border border-[#C1E5D0]/60 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Doctor Portal</span>
+              </Link>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#042618]">
+              Weekly Consultation Schedule
             </h1>
-            <p className="text-slate-400">Set and edit your active slots for patient bookings</p>
+            <p className="text-stone-600 text-sm mt-0.5">Configure available booking windows for patient virtual and clinic visits</p>
           </div>
-          <button
-            onClick={() => router.push("/doctor/dashboard")}
-            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-200 font-medium transition-colors"
-          >
-            Back to Dashboard
-          </button>
         </header>
 
-        <div className="grid lg:grid-cols-3 gap-12">
+        <div className="grid lg:grid-cols-3 gap-8">
           {/* Add Slot Form */}
-          <div className="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-8 h-fit">
-            <h2 className="text-xl font-bold mb-6 text-white">Add Available Slot</h2>
+          <div className="bg-white border border-stone-200/80 rounded-3xl p-6 sm:p-8 h-fit shadow-warm-sm">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-stone-100">
+              <PlusCircle className="w-4 h-4 text-[#042618]" />
+              <h2 className="text-base font-bold text-[#042618]">Add Availability Slot</h2>
+            </div>
             
             {error && (
-              <div className="p-4 mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              <div className="p-3.5 mb-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
                 {error}
               </div>
             )}
 
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={onSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Select Date
+                <label className="block text-xs font-bold text-stone-600 mb-1.5 uppercase tracking-wider">
+                  Date
                 </label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   required
-                  className="w-full bg-slate-900/60 border border-slate-700 rounded-2xl px-4 py-3 text-slate-100 focus:outline-none focus:border-teal-500"
+                  className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:bg-white focus:border-[#042618]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-xs font-bold text-stone-600 mb-1.5 uppercase tracking-wider">
                     Start Time
                   </label>
                   <input
@@ -156,12 +167,12 @@ export default function DoctorAvailabilityPage() {
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
                     required
-                    className="w-full bg-slate-900/60 border border-slate-700 rounded-2xl px-4 py-3 text-slate-100 focus:outline-none focus:border-teal-500"
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:bg-white focus:border-[#042618]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-xs font-bold text-stone-600 mb-1.5 uppercase tracking-wider">
                     End Time
                   </label>
                   <input
@@ -169,7 +180,7 @@ export default function DoctorAvailabilityPage() {
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
                     required
-                    className="w-full bg-slate-900/60 border border-slate-700 rounded-2xl px-4 py-3 text-slate-100 focus:outline-none focus:border-teal-500"
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:bg-white focus:border-[#042618]"
                   />
                 </div>
               </div>
@@ -177,31 +188,34 @@ export default function DoctorAvailabilityPage() {
               <button
                 type="submit"
                 disabled={formLoading}
-                className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-2xl shadow-lg shadow-teal-500/10 transition-all disabled:opacity-50"
+                className="w-full py-3 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs shadow-warm-sm transition-all disabled:opacity-50 mt-2"
               >
-                {formLoading ? "Adding..." : "Add Slot"}
+                {formLoading ? "Publishing Slot..." : "Publish Slot"}
               </button>
             </form>
           </div>
 
           {/* Slots List */}
-          <div className="lg:col-span-2 space-y-6">
-            <h2 className="text-xl font-bold text-white">Your Available Slots</h2>
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-4 h-4 text-[#042618]" />
+              <h2 className="text-base font-bold text-[#042618]">Configured Consultation Slots</h2>
+            </div>
             
             {slots.length === 0 ? (
-              <div className="p-8 text-center bg-slate-800/20 border border-slate-800 rounded-3xl text-slate-500">
-                No slots added yet. Use the form to configure your availability.
+              <div className="p-10 text-center bg-white border border-stone-200/80 rounded-3xl text-stone-500 text-xs shadow-warm-sm">
+                No active slots configured yet. Use the scheduling form to create consultation windows.
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 gap-4">
                 {slots.map((slot) => (
                   <div
                     key={slot.id}
-                    className="p-6 rounded-3xl bg-slate-800/40 border border-slate-700/60 flex flex-col justify-between"
+                    className="p-5 rounded-3xl bg-white border border-stone-200/80 shadow-warm-sm flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm text-slate-400">
+                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-stone-100">
+                        <span className="text-xs text-stone-500 font-medium">
                           {new Date(slot.start).toLocaleDateString(undefined, {
                             weekday: "short",
                             month: "short",
@@ -209,16 +223,16 @@ export default function DoctorAvailabilityPage() {
                           })}
                         </span>
                         <span
-                          className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                          className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
                             slot.isBooked
-                              ? "bg-teal-500/10 text-teal-400"
-                              : "bg-slate-700 text-slate-300"
+                              ? "bg-[#E0F2E7] text-[#042618] border border-[#C1E5D0]"
+                              : "bg-stone-100 text-stone-600 border border-stone-200"
                           }`}
                         >
                           {slot.isBooked ? "Booked" : "Available"}
                         </span>
                       </div>
-                      <div className="text-lg font-bold text-white mb-2">
+                      <div className="text-sm font-bold text-[#042618] mb-1">
                         {new Date(slot.start).toLocaleTimeString(undefined, {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -234,9 +248,10 @@ export default function DoctorAvailabilityPage() {
                     {!slot.isBooked && (
                       <button
                         onClick={() => onDelete(slot.id)}
-                        className="mt-6 text-sm text-red-400 hover:text-red-300 font-semibold text-left self-start"
+                        className="mt-4 text-xs text-rose-600 hover:text-rose-700 font-bold text-left self-start flex items-center gap-1 transition-colors"
                       >
-                        Delete Slot
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove Slot</span>
                       </button>
                     )}
                   </div>

@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Pill, Download, ArrowLeft, Clock, HeartPulse } from "lucide-react";
 
 interface Medication {
   name: string;
@@ -88,8 +89,11 @@ export default function PatientPrescriptionsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center">
-        <div className="text-xl font-semibold">Loading Prescriptions...</div>
+      <div className="min-h-screen bg-[#FAF9F5] text-stone-700 flex items-center justify-center font-sans">
+        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border border-stone-200/80 shadow-warm-sm">
+          <HeartPulse className="w-5 h-5 text-[#042618] animate-pulse" />
+          <div className="text-sm font-semibold text-[#042618]">Loading Prescriptions...</div>
+        </div>
       </div>
     );
   }
@@ -104,72 +108,80 @@ export default function PatientPrescriptionsPage() {
   const pastPrescriptions = categorized.filter((p) => p.state === "PAST");
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6 sm:p-12 relative flex flex-col justify-between">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#FAF9F5] text-stone-800 font-sans p-6 sm:p-10 relative flex flex-col justify-between">
+      <div className="absolute top-[-5%] right-[-5%] w-[45%] h-[45%] rounded-full bg-[#E0F2E7]/40 blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto w-full z-10 relative flex-grow flex flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-slate-800 pb-6 mb-8 shrink-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6 mb-8 shrink-0">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Link 
+                href="/patient/dashboard" 
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#042618] hover:text-[#0F3824] bg-[#E0F2E7]/70 hover:bg-[#E0F2E7] px-3 py-1 rounded-full border border-[#C1E5D0]/60 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
+              </Link>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#042618]">
               Digital Prescriptions
             </h1>
-            <p className="text-slate-400 text-sm">Access, download, or print active and historical prescriptions</p>
+            <p className="text-stone-600 text-sm mt-0.5">Access dosage schedules, verify clinical instructions, and download official PDF prescriptions</p>
           </div>
-          <button
-            onClick={() => router.push("/patient/dashboard")}
-            className="px-5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700 rounded-xl text-slate-300 font-medium transition-colors text-sm"
-          >
-            Back to Dashboard
-          </button>
         </header>
 
         {/* Prescription Sections */}
-        <div className="space-y-12">
+        <div className="space-y-10">
           {/* Active section */}
           <section>
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              🟢 Active Prescriptions
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 rounded-xl bg-[#E0F2E7] flex items-center justify-center text-[#042618] shadow-warm-sm">
+                <Pill className="w-4 h-4" />
+              </div>
+              <h2 className="text-lg font-bold text-[#042618]">
+                Active Prescription Courses
+              </h2>
               {activePrescriptions.length > 0 && (
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-400 font-semibold">
-                  Current Course
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#E0F2E7] text-[#042618] font-bold border border-[#C1E5D0]">
+                  {activePrescriptions.length} Active
                 </span>
               )}
-            </h2>
+            </div>
 
             {activePrescriptions.length === 0 ? (
-              <div className="p-8 text-center bg-slate-800/20 border border-slate-800 rounded-3xl text-slate-500 text-sm">
-                No active prescription courses currently.
+              <div className="p-8 text-center bg-white border border-stone-200/80 rounded-3xl text-stone-500 text-xs shadow-warm-sm">
+                No active prescription regimens at this time.
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-8">
+              <div className="grid sm:grid-cols-2 gap-6">
                 {activePrescriptions.map((appt) => (
                   <div
                     key={appt.id}
-                    className="p-6 bg-slate-800/40 border border-slate-700/60 rounded-3xl flex flex-col justify-between"
+                    className="p-6 bg-white border border-stone-200/80 rounded-3xl shadow-warm-sm hover:shadow-warm-md transition-all flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex justify-between items-start gap-4 mb-4">
+                      <div className="flex justify-between items-start gap-4 mb-4 pb-3 border-b border-stone-100">
                         <div>
-                          <h3 className="font-bold text-lg text-white">{appt.doctor.user.name}</h3>
-                          <p className="text-xs text-slate-500">{appt.doctor.specialization}</p>
+                          <h3 className="font-bold text-base text-[#042618]">Dr. {appt.doctor.user.name}</h3>
+                          <p className="text-xs text-[#0F3824] font-medium">{appt.doctor.specialization}</p>
                         </div>
-                        <span className="text-[10px] text-slate-500">
-                          Issued: {new Date(appt.issuedAt).toLocaleDateString()}
+                        <span className="text-[11px] text-stone-500 font-mono bg-stone-50 px-2.5 py-1 rounded-xl border border-stone-200">
+                          {new Date(appt.issuedAt).toLocaleDateString()}
                         </span>
                       </div>
 
                       {/* Meds list */}
-                      <div className="space-y-4 border-t border-slate-800 pt-4 mb-6">
+                      <div className="space-y-3 mb-6">
                         {appt.meds.map((med, idx) => (
-                          <div key={idx} className="flex justify-between items-start text-sm">
+                          <div key={idx} className="p-3.5 bg-stone-50/70 rounded-2xl border border-stone-200/70 flex justify-between items-center text-xs">
                             <div>
-                              <span className="font-bold text-slate-200">{med.name}</span>
-                              <span className="text-xs text-slate-400 block">
-                                Dosage: {med.dosage} | Frequency: {med.frequency}
+                              <span className="font-bold text-stone-900 block">{med.name}</span>
+                              <span className="text-[11px] text-stone-600 block mt-0.5">
+                                {med.dosage} • {med.frequency}
                               </span>
                             </div>
-                            <span className="text-xs px-2.5 py-0.5 rounded bg-slate-700 text-slate-300 font-semibold">
+                            <span className="text-[11px] px-2.5 py-1 rounded-xl bg-[#E0F2E7] text-[#042618] font-bold border border-[#C1E5D0]">
                               {med.duration}
                             </span>
                           </div>
@@ -182,9 +194,10 @@ export default function PatientPrescriptionsPage() {
                         href={appt.pdfUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-2xl text-center text-sm shadow-md transition-all block"
+                        className="w-full py-3 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-center text-xs shadow-warm-sm transition-all flex items-center justify-center gap-1.5"
                       >
-                        Download PDF Prescription
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download Signed PDF</span>
                       </a>
                     )}
                   </div>
@@ -195,41 +208,44 @@ export default function PatientPrescriptionsPage() {
 
           {/* Past section */}
           <section>
-            <h2 className="text-xl font-bold text-white mb-6">📁 Historical Prescriptions</h2>
+            <div className="flex items-center gap-2 mb-5">
+              <Clock className="w-5 h-5 text-stone-500" />
+              <h2 className="text-lg font-bold text-stone-700">Past & Completed Prescriptions</h2>
+            </div>
 
             {pastPrescriptions.length === 0 ? (
-              <div className="p-8 text-center bg-slate-800/20 border border-slate-800 rounded-3xl text-slate-500 text-sm">
-                No past prescription logs.
+              <div className="p-8 text-center bg-white border border-stone-200/80 rounded-3xl text-stone-500 text-xs shadow-warm-sm">
+                No past prescription archives found.
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-8">
+              <div className="grid sm:grid-cols-2 gap-6">
                 {pastPrescriptions.map((appt) => (
                   <div
                     key={appt.id}
-                    className="p-6 bg-slate-800/20 border border-slate-800 rounded-3xl flex flex-col justify-between"
+                    className="p-6 bg-white/70 border border-stone-200/80 rounded-3xl shadow-warm-sm flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex justify-between items-start gap-4 mb-4">
+                      <div className="flex justify-between items-start gap-4 mb-4 pb-3 border-b border-stone-100">
                         <div>
-                          <h3 className="font-bold text-lg text-slate-400">{appt.doctor.user.name}</h3>
-                          <p className="text-xs text-slate-650">{appt.doctor.specialization}</p>
+                          <h3 className="font-bold text-sm text-stone-700">Dr. {appt.doctor.user.name}</h3>
+                          <p className="text-xs text-stone-500">{appt.doctor.specialization}</p>
                         </div>
-                        <span className="text-[10px] text-slate-650">
-                          Issued: {new Date(appt.issuedAt).toLocaleDateString()}
+                        <span className="text-[11px] text-stone-500 font-mono">
+                          {new Date(appt.issuedAt).toLocaleDateString()}
                         </span>
                       </div>
 
                       {/* Meds list */}
-                      <div className="space-y-4 border-t border-slate-800 pt-4 mb-6">
+                      <div className="space-y-2.5 mb-6">
                         {appt.meds.map((med, idx) => (
-                          <div key={idx} className="flex justify-between items-start text-sm">
+                          <div key={idx} className="p-3 bg-stone-50/50 rounded-xl border border-stone-200/60 flex justify-between items-center text-xs">
                             <div>
-                              <span className="font-bold text-slate-400">{med.name}</span>
-                              <span className="text-xs text-slate-550 block">
-                                Dosage: {med.dosage} | Frequency: {med.frequency}
+                              <span className="font-bold text-stone-700 block">{med.name}</span>
+                              <span className="text-[11px] text-stone-500 block">
+                                {med.dosage} • {med.frequency}
                               </span>
                             </div>
-                            <span className="text-xs px-2.5 py-0.5 rounded bg-slate-800 text-slate-500 font-semibold">
+                            <span className="text-[11px] px-2 py-0.5 rounded-lg bg-stone-100 text-stone-600 font-medium">
                               {med.duration}
                             </span>
                           </div>
@@ -242,9 +258,9 @@ export default function PatientPrescriptionsPage() {
                         href={appt.pdfUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full py-2.5 border border-slate-700 hover:bg-slate-800 text-slate-300 font-semibold rounded-2xl text-center text-sm transition-colors block"
+                        className="w-full py-2.5 bg-stone-100 hover:bg-stone-200/80 text-stone-800 font-bold rounded-2xl text-center text-xs transition-colors block"
                       >
-                        Download Copy
+                        Download Archive Copy
                       </a>
                     )}
                   </div>

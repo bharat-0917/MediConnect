@@ -57,10 +57,10 @@ export default async function ConsultationPage({ params }: PageProps) {
   }
 
   const userId = session.user.id;
-  const userRole = (session.user as any).role;
+  const userRole = session.user.role;
 
   let role: "DOCTOR" | "PATIENT";
-  let displayName = session.user.name || "User";
+  const displayName = session.user.name || "User";
 
   // Access check
   if (userRole === "DOCTOR" && appointment.doctor.user.id === userId) {

@@ -236,6 +236,9 @@ model LabReport {
   // aiFlaggedAnomalies: JSON string representing structured AI output
   aiFlaggedAnomalies String?        
   
+  // Status: "COMPLETED" | "FAILED" | "PENDING"
+  analysisStatus     String         @default("COMPLETED")
+  
   uploadedAt         DateTime       @default(now())
 
   @@index([patientId])

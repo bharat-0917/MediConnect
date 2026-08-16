@@ -3,7 +3,18 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createChildProfile } from "@/app/actions/health";
+import { 
+  Calendar, 
+  CheckCircle2, 
+  Clock, 
+  UserPlus, 
+  ArrowLeft, 
+  HeartPulse, 
+  AlertTriangle,
+  Baby
+} from "lucide-react";
 
 interface Vaccine {
   id: string;
@@ -137,8 +148,11 @@ export default function VaccineTrackerPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center">
-        <div className="text-xl font-semibold">Loading Vaccine Tracker...</div>
+      <div className="min-h-screen bg-[#FAF9F5] text-stone-700 flex items-center justify-center font-sans">
+        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border border-stone-200/80 shadow-warm-sm">
+          <HeartPulse className="w-5 h-5 text-[#042618] animate-pulse" />
+          <div className="text-sm font-semibold text-[#042618]">Loading Vaccine Tracker...</div>
+        </div>
       </div>
     );
   }
@@ -156,76 +170,82 @@ export default function VaccineTrackerPage() {
   const upcomingList = categorizedVaccines.filter((v) => v.computedStatus === "UPCOMING");
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6 sm:p-12 relative flex flex-col justify-between">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#FAF9F5] text-stone-800 font-sans p-6 sm:p-10 relative flex flex-col justify-between">
+      <div className="absolute top-[-5%] right-[-5%] w-[45%] h-[45%] rounded-full bg-[#E0F2E7]/40 blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto w-full z-10 relative flex-grow flex flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-slate-800 pb-6 mb-8 shrink-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6 mb-8 shrink-0">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1">
-              Dependent Vaccine Tracker
+            <div className="flex items-center gap-2 mb-1">
+              <Link 
+                href="/patient/dashboard" 
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#042618] hover:text-[#0F3824] bg-[#E0F2E7]/70 hover:bg-[#E0F2E7] px-3 py-1 rounded-full border border-[#C1E5D0]/60 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
+              </Link>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#042618]">
+              Child Immunization & Vaccine Tracker
             </h1>
-            <p className="text-slate-400 text-sm">
-              Manage vaccination immunization schedules under India's Universal Immunization Programme (UIP)
+            <p className="text-stone-600 text-sm mt-0.5">
+              Track universal immunization schedules under India&apos;s Universal Immunization Programme (UIP)
             </p>
           </div>
-          <button
-            onClick={() => router.push("/patient/dashboard")}
-            className="px-5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700 rounded-xl text-slate-300 font-medium transition-colors text-sm"
-          >
-            Back to Dashboard
-          </button>
         </header>
 
         {/* Dependents Selection / Add dependent widget */}
         <div className="grid lg:grid-cols-4 gap-8 mb-12 flex-grow">
           {/* Dependents list side block */}
-          <div className="lg:col-span-1 bg-slate-800/40 border border-slate-700/60 p-6 rounded-3xl space-y-6 h-fit">
-            <div className="flex justify-between items-center border-b border-slate-700/60 pb-3">
-              <h3 className="font-bold text-sm text-slate-200">Linked Children</h3>
+          <div className="lg:col-span-1 bg-white border border-stone-200/80 p-6 rounded-3xl space-y-6 h-fit shadow-warm-sm">
+            <div className="flex justify-between items-center border-b border-stone-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Baby className="w-4 h-4 text-[#042618]" />
+                <h3 className="font-bold text-sm text-[#042618]">Linked Dependents</h3>
+              </div>
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="text-xs text-teal-400 hover:underline font-semibold"
+                className="text-xs text-[#042618] font-bold hover:underline"
               >
-                {showAddForm ? "View Dependents" : "+ Add Child"}
+                {showAddForm ? "View List" : "+ Add Child"}
               </button>
             </div>
 
             {showAddForm ? (
-              <form onSubmit={handleAddSubmit} className="space-y-4">
+              <form onSubmit={handleAddSubmit} className="space-y-3.5">
                 {formError && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/25 text-red-400 text-[11px] rounded-xl">
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
                     {formError}
                   </div>
                 )}
                 <div>
-                  <label className="block text-[10px] text-slate-450 mb-1">Full Name</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1 uppercase tracking-wider">Full Name</label>
                   <input
                     type="text"
                     required
                     placeholder="Child's Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#042618]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-450 mb-1">Date of Birth</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1 uppercase tracking-wider">Date of Birth</label>
                   <input
                     type="date"
                     required
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:bg-white focus:border-[#042618]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-450 mb-1">Gender</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1 uppercase tracking-wider">Gender</label>
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 focus:outline-none focus:bg-white focus:border-[#042618]"
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -233,60 +253,61 @@ export default function VaccineTrackerPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-450 mb-1">Blood Group (Optional)</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1 uppercase tracking-wider">Blood Group (Optional)</label>
                   <input
                     type="text"
                     placeholder="e.g. O+"
                     value={bloodGroup}
                     onChange={(e) => setBloodGroup(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#042618]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-450 mb-1">Emergency Contact</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1 uppercase tracking-wider">Emergency Contact</label>
                   <input
                     type="text"
                     required
                     placeholder="Phone number"
                     value={emergencyContact}
                     onChange={(e) => setEmergencyContact(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#042618]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-450 mb-1">Home Address (Optional)</label>
+                  <label className="block text-xs font-bold text-stone-600 mb-1 uppercase tracking-wider">Home Address (Optional)</label>
                   <input
                     type="text"
                     placeholder="Address details"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#042618]"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="w-full py-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-xl text-xs shadow-md transition-all"
+                  className="w-full py-2.5 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs shadow-warm-sm transition-all flex items-center justify-center gap-1.5"
                 >
-                  {formLoading ? "Adding..." : "Seed UIP Vaccine Schedule"}
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>{formLoading ? "Adding..." : "Seed UIP Schedule"}</span>
                 </button>
               </form>
             ) : dependents.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-6">No child dependents linked to your account.</p>
+              <p className="text-xs text-stone-500 text-center py-6">No child dependents linked to your account.</p>
             ) : (
               <div className="space-y-2">
                 {dependents.map((dep) => (
                   <button
                     key={dep.id}
                     onClick={() => setSelectedChildId(dep.id)}
-                    className={`w-full p-3 rounded-xl border text-left transition-all text-xs font-semibold ${
+                    className={`w-full p-3.5 rounded-2xl border text-left transition-all text-xs font-bold ${
                       dep.id === selectedChildId
-                        ? "bg-cyan-500/10 border-cyan-500/50 text-cyan-400"
-                        : "bg-slate-900/40 border-slate-800 text-slate-400 hover:border-slate-750 hover:bg-slate-900/80"
+                        ? "bg-[#E0F2E7] border-[#042618] text-[#042618] shadow-warm-sm"
+                        : "bg-stone-50/60 border-stone-200 text-stone-700 hover:bg-white hover:border-stone-300"
                     }`}
                   >
                     <div>{dep.user.name}</div>
-                    <div className="text-[10px] text-slate-550 mt-1 font-normal">
+                    <div className="text-[10px] text-stone-500 mt-1 font-normal">
                       DOB: {new Date(dep.dateOfBirth).toLocaleDateString()} | {dep.gender}
                     </div>
                   </button>
@@ -298,48 +319,57 @@ export default function VaccineTrackerPage() {
           {/* Vaccine schedules panel */}
           <div className="lg:col-span-3 space-y-8">
             {!selectedChild ? (
-              <div className="p-12 text-center bg-slate-800/10 border border-slate-800 rounded-3xl text-slate-500 text-sm">
-                Select a child dependent or register a new one to view the vaccination tracker.
+              <div className="p-12 text-center bg-white border border-stone-200/80 rounded-3xl text-stone-500 text-xs shadow-warm-sm">
+                Select a child dependent from the list or add a new dependent profile to view their vaccine status.
               </div>
             ) : (
-              <div className="space-y-10">
+              <div className="space-y-8">
                 {/* Missed / Overdue Alerts */}
                 {missedList.length > 0 && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl">
-                    <h4 className="text-xs font-bold mb-1">⚠️ Overdue / Missed Vaccinations Detected</h4>
-                    <p className="text-[10px] text-red-400/80">
-                      There are {missedList.length} scheduled immunizations that are overdue by more than 30 days. Please coordinate with your medical specialist to schedule their administration immediately.
-                    </p>
+                  <div className="p-5 bg-rose-50/80 border border-rose-200 text-rose-850 rounded-3xl shadow-warm-sm flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-rose-900 mb-0.5">Overdue / Missed Immunizations ({missedList.length})</h4>
+                      <p className="text-[11px] text-rose-700 leading-relaxed">
+                        There are {missedList.length} scheduled doses overdue by more than 30 days. Please coordinate with your pediatrician to administer these as soon as possible.
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {/* Due Reminders */}
                 {dueList.length > 0 && (
-                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-2xl">
-                    <h4 className="text-xs font-bold mb-1">📅 Immunizations Due</h4>
-                    <p className="text-[10px] text-amber-400/80">
-                      The child is due for {dueList.length} vaccination doses within the active window. Schedule a consultation to mark these completed.
-                    </p>
+                  <div className="p-5 bg-amber-50/80 border border-amber-200 text-amber-900 rounded-3xl shadow-warm-sm flex items-start gap-3">
+                    <Calendar className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-950 mb-0.5">Immunizations Due Now ({dueList.length})</h4>
+                      <p className="text-[11px] text-amber-800 leading-relaxed">
+                        The child is due for {dueList.length} vaccine doses within the active window. Connected doctors can mark these completed upon administration.
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {/* Due list */}
                 {dueList.length > 0 && (
                   <section>
-                    <h3 className="font-bold text-sm text-amber-400 mb-4 flex items-center gap-2">
-                      🟡 Due Immunizations
-                    </h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Clock className="w-4 h-4 text-amber-600" />
+                      <h3 className="font-bold text-sm text-[#042618]">
+                        Due Immunizations
+                      </h3>
+                    </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       {dueList.map((v) => (
-                        <div key={v.id} className="p-5 bg-slate-800/40 border border-slate-700/60 rounded-2xl flex flex-col justify-between">
+                        <div key={v.id} className="p-5 bg-white border border-stone-200/80 rounded-3xl shadow-warm-sm flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between items-start gap-3">
-                              <h4 className="font-bold text-white text-xs">{v.vaccineName}</h4>
-                              <span className="text-[9px] px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded font-bold">
+                              <h4 className="font-bold text-[#042618] text-xs">{v.vaccineName}</h4>
+                              <span className="text-[10px] px-2.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-full font-bold">
                                 Dose {v.doseNumber}
                               </span>
                             </div>
-                            <p className="text-[10px] text-slate-500 mt-2">
+                            <p className="text-[11px] text-stone-500 mt-2 font-mono">
                               Due Date: {new Date(v.scheduledDate).toLocaleDateString()}
                             </p>
                           </div>
@@ -352,20 +382,23 @@ export default function VaccineTrackerPage() {
                 {/* Missed list */}
                 {missedList.length > 0 && (
                   <section>
-                    <h3 className="font-bold text-sm text-red-400 mb-4 flex items-center gap-2">
-                      🔴 Overdue / Missed Vaccinations
-                    </h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <AlertTriangle className="w-4 h-4 text-rose-600" />
+                      <h3 className="font-bold text-sm text-[#042618]">
+                        Overdue / Missed Vaccinations
+                      </h3>
+                    </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       {missedList.map((v) => (
-                        <div key={v.id} className="p-5 bg-slate-800/40 border border-slate-700/60 rounded-2xl flex flex-col justify-between">
+                        <div key={v.id} className="p-5 bg-white border border-stone-200/80 rounded-3xl shadow-warm-sm flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between items-start gap-3">
-                              <h4 className="font-bold text-white text-xs">{v.vaccineName}</h4>
-                              <span className="text-[9px] px-2 py-0.5 bg-red-500/20 text-red-400 rounded font-bold">
+                              <h4 className="font-bold text-stone-800 text-xs">{v.vaccineName}</h4>
+                              <span className="text-[10px] px-2.5 py-0.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-full font-bold">
                                 Dose {v.doseNumber}
                               </span>
                             </div>
-                            <p className="text-[10px] text-slate-500 mt-2">
+                            <p className="text-[11px] text-rose-600 mt-2 font-mono">
                               Was Due: {new Date(v.scheduledDate).toLocaleDateString()}
                             </p>
                           </div>
@@ -377,23 +410,26 @@ export default function VaccineTrackerPage() {
 
                 {/* Upcoming list */}
                 <section>
-                  <h3 className="font-bold text-sm text-slate-350 mb-4 flex items-center gap-2">
-                    🔵 Upcoming Vaccines
-                  </h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar className="w-4 h-4 text-[#042618]" />
+                    <h3 className="font-bold text-sm text-[#042618]">
+                      Upcoming Immunizations
+                    </h3>
+                  </div>
                   {upcomingList.length === 0 ? (
-                    <p className="text-xs text-slate-600">No upcoming vaccine records scheduled.</p>
+                    <p className="text-xs text-stone-500">No upcoming vaccine records scheduled.</p>
                   ) : (
                     <div className="grid sm:grid-cols-2 gap-4">
                       {upcomingList.map((v) => (
-                        <div key={v.id} className="p-5 bg-slate-800/20 border border-slate-800 rounded-2xl flex flex-col justify-between">
+                        <div key={v.id} className="p-5 bg-white border border-stone-200/80 rounded-3xl shadow-warm-sm flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between items-start gap-3">
-                              <h4 className="font-bold text-slate-300 text-xs">{v.vaccineName}</h4>
-                              <span className="text-[9px] px-2 py-0.5 bg-slate-700 text-slate-400 rounded font-bold">
+                              <h4 className="font-bold text-stone-800 text-xs">{v.vaccineName}</h4>
+                              <span className="text-[10px] px-2.5 py-0.5 bg-stone-100 text-stone-700 rounded-full font-bold">
                                 Dose {v.doseNumber}
                               </span>
                             </div>
-                            <p className="text-[10px] text-slate-600 mt-2">
+                            <p className="text-[11px] text-stone-500 mt-2 font-mono">
                               Scheduled: {new Date(v.scheduledDate).toLocaleDateString()}
                             </p>
                           </div>
@@ -405,23 +441,26 @@ export default function VaccineTrackerPage() {
 
                 {/* Completed list */}
                 <section>
-                  <h3 className="font-bold text-sm text-teal-400 mb-4 flex items-center gap-2">
-                    🟢 Completed Immunizations
-                  </h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <CheckCircle2 className="w-4 h-4 text-[#0F3824]" />
+                    <h3 className="font-bold text-sm text-[#042618]">
+                      Completed Immunizations
+                    </h3>
+                  </div>
                   {completedList.length === 0 ? (
-                    <p className="text-xs text-slate-600">No vaccine doses marked as completed yet.</p>
+                    <p className="text-xs text-stone-500">No vaccine doses marked as completed yet.</p>
                   ) : (
                     <div className="grid sm:grid-cols-2 gap-4">
                       {completedList.map((v) => (
-                        <div key={v.id} className="p-5 bg-slate-800/10 border border-slate-800/50 rounded-2xl flex flex-col justify-between">
+                        <div key={v.id} className="p-5 bg-white border border-stone-200/80 rounded-3xl shadow-warm-sm flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between items-start gap-3 mb-2">
-                              <h4 className="font-bold text-slate-400 text-xs line-through">{v.vaccineName}</h4>
-                              <span className="text-[9px] px-2 py-0.5 bg-teal-500/10 text-teal-400 rounded font-bold">
+                              <h4 className="font-bold text-stone-500 text-xs line-through">{v.vaccineName}</h4>
+                              <span className="text-[10px] px-2.5 py-0.5 bg-[#E0F2E7] text-[#042618] border border-[#C1E5D0] rounded-full font-bold">
                                 Dose {v.doseNumber}
                               </span>
                             </div>
-                            <div className="text-[10px] text-slate-550 space-y-1">
+                            <div className="text-[11px] text-stone-600 space-y-0.5">
                               <div>Administered: {v.administeredDate ? new Date(v.administeredDate).toLocaleDateString() : ""}</div>
                               <div>By: {v.administeredBy || "Verified Practitioner"}</div>
                             </div>

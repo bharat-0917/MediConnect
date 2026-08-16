@@ -25,10 +25,10 @@ export default async function DoctorPatientLabReportsPage({ params }: PageProps)
 
   if (!doctor) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6 text-center">
-        <div className="max-w-md bg-slate-800/40 border border-slate-700/60 p-8 rounded-3xl">
-          <h2 className="text-red-400 font-bold text-xl mb-3">Access Denied</h2>
-          <p className="text-slate-400">Doctor profile not found.</p>
+      <div className="min-h-screen bg-[#FAF9F5] text-stone-800 flex items-center justify-center p-6 text-center font-sans">
+        <div className="max-w-md bg-white border border-stone-200/80 p-8 rounded-3xl shadow-warm-sm">
+          <h2 className="text-rose-700 font-bold text-lg mb-2">Access Denied</h2>
+          <p className="text-stone-600 text-xs">Doctor profile not found.</p>
         </div>
       </div>
     );
@@ -39,11 +39,11 @@ export default async function DoctorPatientLabReportsPage({ params }: PageProps)
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6 text-center">
-        <div className="max-w-md bg-slate-800/40 border border-slate-700/60 p-8 rounded-3xl">
-          <h2 className="text-red-400 font-bold text-xl mb-3">Unauthorized Records Access</h2>
-          <p className="text-slate-400">
-            You do not have authorization to view this patient's records. You can only view health records of patients with whom you have an active, confirmed consultation slot.
+      <div className="min-h-screen bg-[#FAF9F5] text-stone-800 flex items-center justify-center p-6 text-center font-sans">
+        <div className="max-w-md bg-white border border-stone-200/80 p-8 rounded-3xl shadow-warm-sm">
+          <h2 className="text-rose-700 font-bold text-lg mb-2">Unauthorized Records Access</h2>
+          <p className="text-stone-600 text-xs leading-relaxed">
+            You do not have authorization to view this patient&apos;s records. You can only view health records of patients with whom you have an active, confirmed consultation slot.
           </p>
         </div>
       </div>
@@ -64,10 +64,10 @@ export default async function DoctorPatientLabReportsPage({ params }: PageProps)
 
   if (!patient) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6 text-center">
-        <div className="max-w-md bg-slate-800/40 border border-slate-700/60 p-8 rounded-3xl">
-          <h2 className="text-red-400 font-bold text-xl mb-3">Patient Not Found</h2>
-          <p className="text-slate-400">The patient record you requested could not be resolved.</p>
+      <div className="min-h-screen bg-[#FAF9F5] text-stone-800 flex items-center justify-center p-6 text-center font-sans">
+        <div className="max-w-md bg-white border border-stone-200/80 p-8 rounded-3xl shadow-warm-sm">
+          <h2 className="text-rose-700 font-bold text-lg mb-2">Patient Not Found</h2>
+          <p className="text-stone-600 text-xs">The patient record you requested could not be resolved.</p>
         </div>
       </div>
     );

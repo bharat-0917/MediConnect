@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { Send, ArrowLeft, LifeBuoy, RefreshCw, Sparkles, HeartPulse } from "lucide-react";
 
 interface Message {
   role: "user" | "model";
@@ -11,14 +12,14 @@ interface Message {
 }
 
 export default function MentalWellnessPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "model",
       content:
-        "Hello, I am your MediConnect Wellness Listener. I am here to provide a safe, non-judgmental space to talk about stress, wellness, or how you are feeling today. What is on your mind?",
+        "Hello, I am your MediConnect Wellness Listener. I am here to provide a safe, calm, and non-judgmental space to talk about stress, emotional balance, or whatever is on your mind today. How are you feeling right now?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -83,7 +84,7 @@ export default function MentalWellnessPage() {
       {
         role: "model",
         content:
-          "Hello, I am your MediConnect Wellness Listener. I am here to provide a safe, non-judgmental space to talk about stress, wellness, or how you are feeling today. What is on your mind?",
+          "Hello, I am your MediConnect Wellness Listener. I am here to provide a safe, calm, and non-judgmental space to talk about stress, emotional balance, or whatever is on your mind today. How are you feeling right now?",
       },
     ]);
     setSessionId(null);
@@ -91,49 +92,57 @@ export default function MentalWellnessPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center">
-        <div className="text-xl font-semibold">Loading Wellness Space...</div>
+      <div className="min-h-screen bg-[#FAF9F5] text-stone-700 flex items-center justify-center font-sans">
+        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border border-stone-200/80 shadow-warm-sm">
+          <HeartPulse className="w-5 h-5 text-[#042618] animate-pulse" />
+          <div className="text-sm font-semibold text-[#042618]">Loading Wellness Space...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6 sm:p-12 relative flex flex-col justify-between">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/5 blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#FAF9F5] text-stone-800 font-sans p-6 sm:p-10 relative flex flex-col justify-between">
+      <div className="absolute top-[-5%] right-[-5%] w-[45%] h-[45%] rounded-full bg-[#E0F2E7]/40 blur-[100px] pointer-events-none" />
 
       <div className="max-w-4xl mx-auto w-full z-10 relative flex-grow flex flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-slate-800 pb-6 mb-8 shrink-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6 mb-8 shrink-0">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Link 
+                href="/patient/dashboard" 
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#042618] hover:text-[#0F3824] bg-[#E0F2E7]/70 hover:bg-[#E0F2E7] px-3 py-1 rounded-full border border-[#C1E5D0]/60 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
+              </Link>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#042618]">
               Mental Wellness Space
             </h1>
-            <p className="text-slate-400 text-sm">Empathetic listening and stress management support</p>
+            <p className="text-stone-600 text-sm mt-0.5">A confidential, empathetic space for stress relief and emotional support</p>
           </div>
-          <div className="flex gap-4">
-            <button
-              onClick={startNewSession}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl text-slate-300 font-medium transition-colors text-xs"
-            >
-              Reset Chat
-            </button>
-            <button
-              onClick={() => router.push("/patient/dashboard")}
-              className="px-5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700 rounded-xl text-slate-300 font-medium transition-colors text-sm"
-            >
-              Back to Dashboard
-            </button>
-          </div>
+          
+          <button
+            onClick={startNewSession}
+            className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-stone-50 border border-stone-200/80 rounded-2xl text-stone-700 font-bold transition-all text-xs shadow-warm-sm w-fit"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Reset Conversation</span>
+          </button>
         </header>
 
         {/* Disclaimer / Crisis Banner */}
-        <div className="mb-6 p-6 bg-cyan-500/5 border border-cyan-500/10 text-cyan-300 rounded-3xl text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-          <div className="flex items-start gap-3">
-            <span className="text-xl shrink-0 mt-0.5">🛋️</span>
+        <div className="mb-6 p-5 sm:p-6 bg-[#E0F2E7]/70 border border-[#C1E5D0] text-[#042618] rounded-3xl text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0 shadow-warm-sm">
+          <div className="flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-2xl bg-[#042618] text-[#E0F2E7] flex items-center justify-center shrink-0 shadow-warm-sm">
+              <LifeBuoy className="w-5 h-5" />
+            </div>
             <div>
-              <p className="font-semibold text-white mb-0.5">Wellness Support Space</p>
-              <p className="text-slate-400">
-                This is a supportive listening tool, not clinical therapy. For immediate danger or crises, dial 911 or call/text 988.
+              <p className="font-bold text-[#042618] mb-0.5">Confidential Wellness Space</p>
+              <p className="text-stone-700 text-xs leading-relaxed">
+                This space is completely private and not visible to connected doctors. If you or someone you know is in crisis, free support is available 24/7.
               </p>
             </div>
           </div>
@@ -141,26 +150,26 @@ export default function MentalWellnessPage() {
             href="https://988lifeline.org"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-center text-xs shrink-0 transition-colors"
+            className="px-4 py-2.5 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-center text-xs shrink-0 transition-all shadow-warm-sm"
           >
-            Visit 988 Lifeline
+            Crisis Support (988)
           </a>
         </div>
 
         {/* Chat window */}
-        <div className="flex-grow flex flex-col bg-slate-800/20 border border-slate-800 rounded-3xl p-6 justify-between min-h-[400px]">
+        <div className="flex-grow flex flex-col bg-white border border-stone-200/80 rounded-3xl p-6 sm:p-8 justify-between min-h-[420px] shadow-warm-sm">
           {/* Chat log */}
-          <div className="flex-grow overflow-y-auto space-y-4 max-h-[450px] pr-2 mb-6">
+          <div className="flex-grow overflow-y-auto space-y-4 max-h-[420px] pr-2 mb-6">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] p-4 rounded-2xl text-sm ${
+                  className={`max-w-[82%] p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-teal-500 text-slate-950 rounded-tr-none font-medium"
-                      : "bg-slate-800 border border-slate-700 text-slate-200 rounded-tl-none leading-relaxed"
+                      ? "bg-[#042618] text-white rounded-tr-none font-medium shadow-warm-sm"
+                      : "bg-[#F0F9F3] border border-[#E0F2E7] text-stone-800 rounded-tl-none font-normal"
                   }`}
                 >
                   {msg.content}
@@ -169,8 +178,9 @@ export default function MentalWellnessPage() {
             ))}
             {chatLoading && (
               <div className="flex justify-start">
-                <div className="bg-slate-800 border border-slate-700 text-slate-400 text-xs px-4 py-3 rounded-2xl rounded-tl-none animate-pulse">
-                  Listening...
+                <div className="bg-[#F0F9F3] border border-[#E0F2E7] text-stone-600 text-xs px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-[#27794D] animate-spin" />
+                  <span>Listening mindfully...</span>
                 </div>
               </div>
             )}
@@ -178,23 +188,24 @@ export default function MentalWellnessPage() {
           </div>
 
           {/* Form Input */}
-          <div className="pt-4 border-t border-slate-800 shrink-0">
-            <form onSubmit={handleSend} className="flex gap-4">
+          <div className="pt-4 border-t border-stone-100 shrink-0">
+            <form onSubmit={handleSend} className="flex gap-3">
               <input
                 type="text"
                 required
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={chatLoading}
-                placeholder="How are you feeling today? Talk about stress, thoughts, or feelings..."
-                className="flex-grow bg-slate-900/60 border border-slate-700 rounded-2xl px-5 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm focus:ring-1 focus:ring-teal-500"
+                placeholder="Share your thoughts or what is causing stress today..."
+                className="flex-grow bg-stone-50/70 border border-stone-200 rounded-2xl px-5 py-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#042618] focus:ring-1 focus:ring-[#042618] text-xs sm:text-sm transition-all"
               />
               <button
                 type="submit"
                 disabled={chatLoading || !input.trim()}
-                className="px-6 py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-2xl text-sm transition-all disabled:opacity-50"
+                className="px-6 py-3 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs sm:text-sm transition-all shadow-warm-sm flex items-center gap-1.5 disabled:opacity-50"
               >
-                Share
+                <span>Share</span>
+                <Send className="w-3.5 h-3.5" />
               </button>
             </form>
           </div>

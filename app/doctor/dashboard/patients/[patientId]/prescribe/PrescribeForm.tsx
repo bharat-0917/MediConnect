@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Pill, Plus, Trash2, ArrowLeft, CheckCircle2, FileText } from "lucide-react";
 import { createPrescription } from "@/app/actions/appointment";
 import { jsPDF } from "jspdf";
 
@@ -152,61 +154,64 @@ export default function PrescribeForm({
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6 sm:p-12 relative flex flex-col justify-between">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/5 blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#FAF9F5] text-stone-800 font-sans p-6 sm:p-10 relative flex flex-col justify-between">
+      <div className="absolute top-[-5%] right-[-5%] w-[45%] h-[45%] rounded-full bg-[#E0F2E7]/40 blur-[100px] pointer-events-none" />
 
       <div className="max-w-4xl mx-auto w-full z-10 relative flex-grow flex flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-slate-800 pb-6 mb-8 shrink-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6 mb-8 shrink-0">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1">
-              Issue Prescription
+            <div className="flex items-center gap-2 mb-1">
+              <Link 
+                href="/doctor/dashboard/appointments" 
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#042618] hover:text-[#0F3824] bg-[#E0F2E7]/70 hover:bg-[#E0F2E7] px-3 py-1 rounded-full border border-[#C1E5D0]/60 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Appointments</span>
+              </Link>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#042618]">
+              Issue Digital Prescription
             </h1>
-            <p className="text-slate-400 text-sm">
-              Issuing prescription to patient: <span className="text-teal-400 font-semibold">{patientName}</span>
+            <p className="text-stone-600 text-sm mt-0.5">
+              Prescribing for patient: <span className="text-[#042618] font-bold">{patientName}</span>
             </p>
           </div>
-          <button
-            onClick={() => router.push("/doctor/dashboard/appointments")}
-            className="px-5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700 rounded-xl text-slate-300 font-medium transition-colors text-sm"
-          >
-            Cancel
-          </button>
         </header>
 
         {success ? (
-          <div className="max-w-xl mx-auto text-center bg-slate-800/40 border border-slate-700/60 p-10 rounded-3xl mt-8">
-            <div className="w-16 h-16 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center text-3xl mx-auto mb-6">
-              ✓
+          <div className="max-w-xl mx-auto text-center bg-white border border-stone-200/80 p-10 rounded-3xl mt-8 shadow-warm-sm">
+            <div className="w-16 h-16 rounded-full bg-[#E0F2E7] text-[#042618] flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-3">Prescription Issued</h2>
-            <p className="text-slate-400 mb-8">
-              The digital prescription has been recorded in the database, compiled to a PDF document, and shared with the patient dashboard.
+            <h2 className="text-xl font-bold text-[#042618] mb-2">Prescription Issued Successfully</h2>
+            <p className="text-stone-600 text-xs mb-8 leading-relaxed">
+              The digital prescription has been logged to the patient&apos;s EHR record, signed with doctor credentials, and exported as a downloadable PDF in their portal.
             </p>
             <button
               onClick={() => router.push("/doctor/dashboard/appointments")}
-              className="px-8 py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-2xl shadow-lg"
+              className="px-8 py-3 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs shadow-warm-sm transition-all"
             >
               Back to Appointments
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
             {error && (
-              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
                 {error}
               </div>
             )}
 
             {/* Link to appointment */}
-            <div className="bg-slate-800/40 border border-slate-700/60 p-6 rounded-3xl">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Associate with Appointment (Optional)
+            <div className="bg-white border border-stone-200/80 p-6 rounded-3xl shadow-warm-sm">
+              <label className="block text-xs font-bold text-stone-600 mb-2 uppercase tracking-wider">
+                Associate with Consultation (Optional)
               </label>
               <select
                 value={selectedAppointmentId}
                 onChange={(e) => setSelectedAppointmentId(e.target.value)}
-                className="w-full bg-slate-900/60 border border-slate-700 rounded-2xl px-4 py-3 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
+                className="w-full bg-stone-50/70 border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:bg-white focus:border-[#042618]"
               >
                 <option value="">No appointment association</option>
                 {appointments.map((appt) => (
@@ -218,74 +223,78 @@ export default function PrescribeForm({
             </div>
 
             {/* Medications list */}
-            <div className="bg-slate-800/40 border border-slate-700/60 p-6 rounded-3xl space-y-6">
-              <div className="flex justify-between items-center border-b border-slate-700/60 pb-4">
-                <h3 className="text-lg font-bold text-white">Medication List</h3>
+            <div className="bg-white border border-stone-200/80 p-6 sm:p-8 rounded-3xl shadow-warm-sm space-y-6">
+              <div className="flex justify-between items-center border-b border-stone-100 pb-4">
+                <div className="flex items-center gap-2">
+                  <Pill className="w-5 h-5 text-[#042618]" />
+                  <h3 className="text-base font-bold text-[#042618]">Medication Regimen</h3>
+                </div>
                 <button
                   type="button"
                   onClick={handleAddRow}
-                  className="px-4 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 font-semibold rounded-xl text-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#E0F2E7] hover:bg-[#D0EBD9] text-[#042618] font-bold rounded-xl text-xs transition-colors border border-[#C1E5D0]"
                 >
-                  + Add Medicine
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Medicine</span>
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {medications.map((med, idx) => (
                   <div
                     key={idx}
-                    className="grid sm:grid-cols-4 gap-4 p-4 bg-slate-900/40 border border-slate-800 rounded-2xl relative"
+                    className="grid sm:grid-cols-4 gap-3 p-4 bg-stone-50/70 border border-stone-200/80 rounded-2xl relative"
                   >
                     <div>
-                      <label className="block text-[10px] text-slate-500 mb-1">Medicine Name</label>
+                      <label className="block text-[11px] font-bold text-stone-500 mb-1 uppercase tracking-wider">Drug Name</label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Paracetamol"
+                        placeholder="e.g. Amoxicillin"
                         value={med.name}
                         onChange={(e) => handleMedicationChange(idx, "name", e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-750 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                        className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#042618]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-slate-500 mb-1">Dosage</label>
+                      <label className="block text-[11px] font-bold text-stone-500 mb-1 uppercase tracking-wider">Dosage</label>
                       <input
                         type="text"
                         required
                         placeholder="e.g. 500mg"
                         value={med.dosage}
                         onChange={(e) => handleMedicationChange(idx, "dosage", e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-750 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                        className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#042618]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-slate-500 mb-1">Frequency</label>
+                      <label className="block text-[11px] font-bold text-stone-500 mb-1 uppercase tracking-wider">Frequency</label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Twice daily"
+                        placeholder="e.g. Twice daily after food"
                         value={med.frequency}
                         onChange={(e) => handleMedicationChange(idx, "frequency", e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-750 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                        className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#042618]"
                       />
                     </div>
                     <div className="relative pr-8">
-                      <label className="block text-[10px] text-slate-500 mb-1">Duration</label>
+                      <label className="block text-[11px] font-bold text-stone-500 mb-1 uppercase tracking-wider">Duration</label>
                       <input
                         type="text"
                         required
                         placeholder="e.g. 5 days"
                         value={med.duration}
                         onChange={(e) => handleMedicationChange(idx, "duration", e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-750 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-teal-500"
+                        className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#042618]"
                       />
                       {medications.length > 1 && (
                         <button
                           type="button"
                           onClick={() => handleRemoveRow(idx)}
-                          className="absolute right-0 bottom-2 text-red-500 hover:text-red-400 text-sm font-bold w-6 h-6 flex items-center justify-center"
+                          className="absolute right-0 bottom-2 text-rose-500 hover:text-rose-700 font-bold w-6 h-6 flex items-center justify-center"
                         >
-                          ×
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -297,9 +306,10 @@ export default function PrescribeForm({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-2xl shadow-lg transition-all"
+              className="w-full py-3.5 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs shadow-warm-sm transition-all flex items-center justify-center gap-2"
             >
-              {loading ? "Compiling & Uploading Prescription..." : "Confirm & Issue Prescription"}
+              <FileText className="w-4 h-4" />
+              <span>{loading ? "Compiling & Uploading Prescription..." : "Sign & Issue Digital Prescription"}</span>
             </button>
           </form>
         )}

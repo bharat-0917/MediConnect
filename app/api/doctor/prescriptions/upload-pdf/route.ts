@@ -41,8 +41,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, pdfUrl });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal Server Error";
     console.error("Prescription PDF upload failed:", error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

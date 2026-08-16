@@ -33,7 +33,7 @@ async function callGeminiVision(fileBuffer: Buffer, mimeType: string) {
     throw new Error("Missing GEMINI_API_KEY in environment variables");
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
   const base64Data = fileBuffer.toString("base64");
 
   const response = await fetch(url, {
@@ -114,31 +114,39 @@ export async function POST(request: NextRequest) {
     const fileUrl = `/uploads/${uniqueFilename}`;
 
     // 3. Invoke Gemini Vision to analyze PDF or Image
-    let aiResponse = "";
+    let aiSummary: string | null = null;
+    let aiFlaggedAnomalies: string | null = null;
+    let analysisStatus: "COMPLETED" | "FAILED" = "COMPLETED";
+
     try {
-      aiResponse = await callGeminiVision(fileBuffer, fileType);
+      const aiResponse = await callGeminiVision(fileBuffer, fileType);
+
+      // 4. Parse Gemini response (split at separation token)
+      const parts = aiResponse.split("---SEPARATE---");
+      aiSummary = parts[0]?.trim() || "No summary generated.";
+      let anomaliesStr = parts[1]?.trim() || "[]";
+
+      // Clean up markdown block wraps if Gemini ignored the instruction
+      if (anomaliesStr.startsWith("```json")) {
+        anomaliesStr = anomaliesStr.replace(/^```json/, "").replace(/```$/, "").trim();
+      } else if (anomaliesStr.startsWith("```")) {
+        anomaliesStr = anomaliesStr.replace(/^```/, "").replace(/```$/, "").trim();
+      }
+
+      // Validate JSON structure
+      try {
+        JSON.parse(anomaliesStr);
+        aiFlaggedAnomalies = anomaliesStr;
+      } catch {
+        aiFlaggedAnomalies = "[]";
+      }
+
+      analysisStatus = "COMPLETED";
     } catch (err) {
-      console.error("Gemini parsing failed:", err);
-      aiResponse = "Error: Failed to process report with AI analyzer.---SEPARATE---[]";
-    }
-
-    // 4. Parse Gemini response (split at separation token)
-    const parts = aiResponse.split("---SEPARATE---");
-    const aiSummary = parts[0]?.trim() || "No summary generated.";
-    let aiFlaggedAnomalies = parts[1]?.trim() || "[]";
-
-    // Clean up markdown block wraps if Gemini ignored the instruction
-    if (aiFlaggedAnomalies.startsWith("```json")) {
-      aiFlaggedAnomalies = aiFlaggedAnomalies.replace(/^```json/, "").replace(/```$/, "").trim();
-    } else if (aiFlaggedAnomalies.startsWith("```")) {
-      aiFlaggedAnomalies = aiFlaggedAnomalies.replace(/^```/, "").replace(/```$/, "").trim();
-    }
-
-    // Validate JSON structure
-    try {
-      JSON.parse(aiFlaggedAnomalies);
-    } catch {
-      aiFlaggedAnomalies = "[]";
+      console.error("Gemini Vision analysis failed:", err);
+      aiSummary = null;
+      aiFlaggedAnomalies = null;
+      analysisStatus = "FAILED";
     }
 
     // 5. Save report to DB under patient profile
@@ -159,12 +167,14 @@ export async function POST(request: NextRequest) {
         fileType,
         aiSummary,
         aiFlaggedAnomalies,
+        analysisStatus,
       },
     });
 
     return NextResponse.json({ success: true, report });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal Server Error";
     console.error("Lab report upload failed:", error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

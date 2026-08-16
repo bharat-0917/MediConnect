@@ -7,7 +7,7 @@ import { canDoctorAccessPatient } from "@/lib/access";
 export async function logHealthMetric(
   patientUserId: string,
   type: "WEIGHT" | "BLOOD_PRESSURE" | "BLOOD_SUGAR" | "SLEEP" | "STEPS" | "HEART_RATE",
-  valueObj: Record<string, any>
+  valueObj: Record<string, number | string>
 ) {
   try {
     const patient = await prisma.patientProfile.findUnique({
@@ -34,7 +34,7 @@ export async function logHealthMetric(
   }
 }
 
-export async function savePatientGoals(patientUserId: string, goalsObj: Record<string, any>) {
+export async function savePatientGoals(patientUserId: string, goalsObj: Record<string, number | string>) {
   try {
     const patient = await prisma.patientProfile.findUnique({
       where: { userId: patientUserId },

@@ -4,6 +4,17 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { 
+  Calendar, 
+  Video, 
+  CheckCircle2, 
+  XCircle, 
+  ArrowLeft, 
+  Clock,
+  HeartPulse,
+  Phone,
+  Mail
+} from "lucide-react";
 import { acceptAppointment, declineAppointment } from "@/app/actions/appointment";
 
 const isJoinable = (appt: Appointment) => {
@@ -22,7 +33,6 @@ const isBeforeJoinTime = (appt: Appointment) => {
   const tenMinutesBefore = scheduledTime - 10 * 60 * 1000;
   return now < tenMinutesBefore;
 };
-
 
 interface Appointment {
   id: string;
@@ -109,8 +119,11 @@ export default function DoctorAppointmentsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center">
-        <div className="text-xl font-semibold">Loading Appointments Panel...</div>
+      <div className="min-h-screen bg-[#FAF9F5] text-stone-700 flex items-center justify-center font-sans">
+        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border border-stone-200/80 shadow-warm-sm">
+          <HeartPulse className="w-5 h-5 text-[#042618] animate-pulse" />
+          <div className="text-sm font-semibold text-[#042618]">Loading Appointments Panel...</div>
+        </div>
       </div>
     );
   }
@@ -120,83 +133,96 @@ export default function DoctorAppointmentsPage() {
   const completedAppts = appointments.filter((a) => a.status === "COMPLETED" || a.status === "CANCELLED");
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6 sm:p-12 relative">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-500/5 blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#FAF9F5] text-stone-800 font-sans p-6 sm:p-10 relative">
+      <div className="absolute top-[-5%] right-[-5%] w-[45%] h-[45%] rounded-full bg-[#E0F2E7]/40 blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto z-10 relative">
-        <header className="flex items-center justify-between border-b border-slate-800 pb-8 mb-12">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6 mb-8">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">
-              Appointment Manager
+            <div className="flex items-center gap-2 mb-1">
+              <Link 
+                href="/doctor/dashboard" 
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#042618] hover:text-[#0F3824] bg-[#E0F2E7]/70 hover:bg-[#E0F2E7] px-3 py-1 rounded-full border border-[#C1E5D0]/60 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Doctor Portal</span>
+              </Link>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#042618]">
+              Appointment Requests & Consultations
             </h1>
-            <p className="text-slate-400">Accept scheduling requests and check patient queues</p>
+            <p className="text-stone-600 text-sm mt-0.5">Review patient bookings, access medical charts, and launch encrypted video consults</p>
           </div>
-          <button
-            onClick={() => router.push("/doctor/dashboard")}
-            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-200 font-medium transition-colors"
-          >
-            Back to Dashboard
-          </button>
         </header>
 
         <div className="space-y-12">
           {/* Requested Section */}
           <section>
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              Pending Requests
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shadow-warm-sm">
+                <Clock className="w-4 h-4" />
+              </div>
+              <h2 className="text-lg font-bold text-[#042618]">
+                Pending Booking Requests
+              </h2>
               {requestedAppts.length > 0 && (
-                <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400">
-                  {requestedAppts.length} new
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold border border-amber-200">
+                  {requestedAppts.length} Pending
                 </span>
               )}
-            </h2>
+            </div>
 
             {requestedAppts.length === 0 ? (
-              <div className="p-8 text-center bg-slate-800/20 border border-slate-800 rounded-3xl text-slate-500 text-sm">
+              <div className="p-8 text-center bg-white border border-stone-200/80 rounded-3xl text-stone-500 text-xs shadow-warm-sm">
                 No pending appointment requests currently.
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-8">
+              <div className="grid sm:grid-cols-2 gap-6">
                 {requestedAppts.map((appt) => (
                   <div
                     key={appt.id}
-                    className="p-6 rounded-3xl bg-slate-800/40 border border-slate-700/60 flex flex-col justify-between"
+                    className="p-6 rounded-3xl bg-white border border-stone-200/80 shadow-warm-sm hover:shadow-warm-md transition-all flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex justify-between items-start gap-4 mb-4">
-                        <h3 className="font-bold text-lg text-white">{appt.patient.user.name}</h3>
-                        <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 font-semibold uppercase">
+                      <div className="flex justify-between items-start gap-4 mb-3 pb-3 border-b border-stone-100">
+                        <div>
+                          <h3 className="font-bold text-base text-[#042618]">{appt.patient.user.name}</h3>
+                          <span className="text-[11px] text-stone-500 font-medium">
+                            Requested for: {new Date(appt.scheduledAt).toLocaleString(undefined, {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <span className="text-xs px-2.5 py-1 rounded-xl bg-amber-50 text-amber-800 font-bold border border-amber-200 uppercase tracking-wider">
                           {appt.type}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 mb-6 font-semibold">
-                        {new Date(appt.scheduledAt).toLocaleString(undefined, {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                      <p className="text-slate-300 text-sm italic bg-slate-900/40 p-4 rounded-2xl mb-6">
+
+                      <p className="text-stone-700 text-xs italic bg-[#F0F9F3] p-4 rounded-2xl mb-6 border border-[#E0F2E7]">
                         &ldquo;{appt.reasonForVisit}&rdquo;
                       </p>
                     </div>
 
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                       <button
                         onClick={() => handleAccept(appt.id)}
                         disabled={actionLoadingId !== null}
-                        className="flex-1 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
+                        className="flex-1 py-3 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs transition-all shadow-warm-sm flex items-center justify-center gap-1.5"
                       >
-                        {actionLoadingId === appt.id ? "Processing..." : "Accept"}
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>{actionLoadingId === appt.id ? "Processing..." : "Accept Request"}</span>
                       </button>
                       <button
                         onClick={() => handleDecline(appt.id)}
                         disabled={actionLoadingId !== null}
-                        className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold rounded-xl text-sm transition-all"
+                        className="flex-1 py-3 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 font-bold rounded-2xl text-xs transition-all flex items-center justify-center gap-1.5"
                       >
-                        Decline
+                        <XCircle className="w-3.5 h-3.5 text-stone-500" />
+                        <span>Decline</span>
                       </button>
                     </div>
                   </div>
@@ -207,98 +233,96 @@ export default function DoctorAppointmentsPage() {
 
           {/* Confirmed Section */}
           <section>
-            <h2 className="text-2xl font-bold text-white mb-6">Upcoming Confirmed</h2>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 rounded-xl bg-[#E0F2E7] text-[#042618] flex items-center justify-center shadow-warm-sm">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <h2 className="text-lg font-bold text-[#042618]">Confirmed Consultations</h2>
+              {confirmedAppts.length > 0 && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#E0F2E7] text-[#042618] font-bold border border-[#C1E5D0]">
+                  {confirmedAppts.length} Scheduled
+                </span>
+              )}
+            </div>
 
             {confirmedAppts.length === 0 ? (
-              <div className="p-8 text-center bg-slate-800/20 border border-slate-800 rounded-3xl text-slate-500 text-sm">
+              <div className="p-8 text-center bg-white border border-stone-200/80 rounded-3xl text-stone-500 text-xs shadow-warm-sm">
                 No upcoming confirmed appointments.
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-8">
+              <div className="grid sm:grid-cols-2 gap-6">
                 {confirmedAppts.map((appt) => (
                   <div
                     key={appt.id}
-                    className="p-6 rounded-3xl bg-slate-800/40 border border-slate-700/60 flex flex-col justify-between"
+                    className="p-6 rounded-3xl bg-white border border-stone-200/80 shadow-warm-sm hover:shadow-warm-md transition-all flex flex-col justify-between"
                   >
                     <div>
-                      <div className="flex justify-between items-start gap-4 mb-4">
-                        <h3 className="font-bold text-lg text-white">{appt.patient.user.name}</h3>
-                        <span className="text-xs px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-400 font-semibold uppercase">
+                      <div className="flex justify-between items-start gap-4 mb-3 pb-3 border-b border-stone-100">
+                        <div>
+                          <h3 className="font-bold text-base text-[#042618]">{appt.patient.user.name}</h3>
+                          <span className="text-xs text-[#0F3824] font-bold">
+                            {new Date(appt.scheduledAt).toLocaleString(undefined, {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <span className="text-xs px-2.5 py-1 rounded-xl bg-[#E0F2E7] text-[#042618] font-bold border border-[#C1E5D0] uppercase">
                           {appt.type}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400 mb-4 font-semibold">
-                        {new Date(appt.scheduledAt).toLocaleString(undefined, {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                      <div className="text-xs text-slate-500 space-y-1 mb-4">
-                        <div>Phone: {appt.patient.user.phone}</div>
-                        <div>Email: {appt.patient.user.email}</div>
-                        <div className="pt-2 flex flex-col gap-1.5">
-                          <Link
-                            href={`/doctor/dashboard/patients/${appt.patient.id}/lab-reports`}
-                            className="text-teal-400 hover:text-teal-300 font-semibold underline inline-block"
-                          >
-                            📁 View Patient Lab Reports
-                          </Link>
-                          <Link
-                            href={`/doctor/dashboard/patients/${appt.patient.id}/prescribe`}
-                            className="text-teal-400 hover:text-teal-300 font-semibold underline inline-block"
-                          >
-                            ✏️ Issue Digital Prescription
-                          </Link>
-                          <Link
-                            href={`/doctor/dashboard/patients/${appt.patient.id}/health-tracker`}
-                            className="text-teal-400 hover:text-teal-300 font-semibold underline inline-block"
-                          >
-                            📊 View Patient Vitals & Goals
-                          </Link>
-                          <Link
-                            href={`/doctor/dashboard/patients/${appt.patient.id}/vaccines`}
-                            className="text-teal-400 hover:text-teal-300 font-semibold underline inline-block"
-                          >
-                            🛡️ Manage Immunization Schedule
-                          </Link>
+
+                      <div className="text-xs text-stone-600 space-y-1 mb-4">
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-stone-400" />
+                          <span>{appt.patient.user.phone}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5 text-stone-400" />
+                          <span>{appt.patient.user.email}</span>
                         </div>
                       </div>
-                      <p className="text-slate-300 text-sm italic bg-slate-900/40 p-4 rounded-2xl mb-4">
+
+                      <p className="text-stone-700 text-xs italic bg-stone-50 p-3.5 rounded-2xl mb-4 border border-stone-200/60">
                         &ldquo;{appt.reasonForVisit}&rdquo;
                       </p>
+
+                      {/* Deep Link to Consolidated Patient View */}
                       <Link
                         href={`/doctor/dashboard/patients/${appt.patient.id}`}
-                        className="w-full py-2.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 font-bold rounded-2xl text-center text-xs transition-all block border border-teal-500/25 shadow-sm"
+                        className="w-full py-2.5 bg-[#E0F2E7] hover:bg-[#D0EBD9] text-[#042618] font-bold rounded-2xl text-center text-xs transition-all block border border-[#C1E5D0] shadow-warm-sm mb-3"
                       >
-                        📋 Open Consolidated Patient Record
+                        Open Consolidated Patient Record →
                       </Link>
                     </div>
 
                     {appt.type === "VIRTUAL" && appt.status === "CONFIRMED" && (
-                      <div className="mt-6">
+                      <div className="mt-2">
                         {isJoinable(appt) ? (
                           <Link
                             href={`/consultation/${appt.id}`}
-                            className="block w-full py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 text-center font-bold rounded-xl text-sm transition-all shadow-md shadow-teal-500/10"
+                            className="block w-full py-3 bg-[#042618] hover:bg-[#073824] text-white text-center font-bold rounded-2xl text-xs transition-all shadow-warm-sm flex items-center justify-center gap-2"
                           >
-                            Join Call
+                            <Video className="w-4 h-4 text-[#E0F2E7]" />
+                            <span>Join Video Consultation</span>
                           </Link>
                         ) : isBeforeJoinTime(appt) ? (
                           <button
                             disabled
-                            className="w-full py-2.5 bg-slate-800 border border-slate-700 text-slate-500 font-bold rounded-xl text-sm cursor-not-allowed"
+                            className="w-full py-3 bg-stone-100 border border-stone-200 text-stone-500 font-bold rounded-2xl text-xs cursor-not-allowed flex items-center justify-center gap-2"
                           >
-                            Join Call (Active 10m before)
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Opens 10m before scheduled time</span>
                           </button>
                         ) : (
                           <button
                             disabled
-                            className="w-full py-2.5 bg-slate-850 text-slate-600 font-bold rounded-xl text-sm cursor-not-allowed"
+                            className="w-full py-3 bg-stone-100 text-stone-400 font-bold rounded-2xl text-xs cursor-not-allowed"
                           >
-                            Join Call (Ended)
+                            Consultation Closed
                           </button>
                         )}
                       </div>
@@ -311,40 +335,40 @@ export default function DoctorAppointmentsPage() {
 
           {/* History Section */}
           <section>
-            <h2 className="text-2xl font-bold text-white mb-6 font-sans">History (Cancelled & Completed)</h2>
+            <h2 className="text-lg font-bold text-stone-700 mb-5 font-sans">Consultation History</h2>
             {completedAppts.length === 0 ? (
-              <div className="p-8 text-center bg-slate-800/20 border border-slate-800 rounded-3xl text-slate-500 text-sm">
-                No past appointment records.
+              <div className="p-8 text-center bg-white border border-stone-200/80 rounded-3xl text-stone-500 text-xs shadow-warm-sm">
+                No past consultation records.
               </div>
             ) : (
-              <div className="overflow-x-auto bg-slate-800/20 border border-slate-800/60 rounded-3xl">
-                <table className="w-full text-left border-collapse text-sm">
+              <div className="overflow-x-auto bg-white border border-stone-200/80 rounded-3xl shadow-warm-sm">
+                <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-slate-800 text-slate-500 font-semibold">
-                      <th className="p-6">Patient</th>
-                      <th className="p-6">Scheduled Date</th>
-                      <th className="p-6">Type</th>
-                      <th className="p-6">Status</th>
+                    <tr className="border-b border-stone-100 text-stone-500 font-bold uppercase tracking-wider bg-stone-50/50">
+                      <th className="p-5">Patient</th>
+                      <th className="p-5">Scheduled Date</th>
+                      <th className="p-5">Mode</th>
+                      <th className="p-5 text-right">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                  <tbody className="divide-y divide-stone-100 text-stone-700">
                     {completedAppts.map((appt) => (
-                      <tr key={appt.id}>
-                        <td className="p-6 font-bold text-white">{appt.patient.user.name}</td>
-                        <td className="p-6">
+                      <tr key={appt.id} className="hover:bg-stone-50/50 transition-colors">
+                        <td className="p-5 font-bold text-[#042618]">{appt.patient.user.name}</td>
+                        <td className="p-5 text-stone-600 font-mono">
                           {new Date(appt.scheduledAt).toLocaleDateString(undefined, {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
                           })}
                         </td>
-                        <td className="p-6 uppercase text-xs font-semibold">{appt.type}</td>
-                        <td className="p-6">
+                        <td className="p-5 uppercase font-bold text-stone-500">{appt.type}</td>
+                        <td className="p-5 text-right">
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                            className={`text-[11px] px-2.5 py-1 rounded-full font-bold ${
                               appt.status === "COMPLETED"
-                                ? "bg-teal-500/10 text-teal-400"
-                                : "bg-red-500/10 text-red-400"
+                                ? "bg-[#E0F2E7] text-[#042618] border border-[#C1E5D0]"
+                                : "bg-rose-50 text-rose-700 border border-rose-200"
                             }`}
                           >
                             {appt.status}

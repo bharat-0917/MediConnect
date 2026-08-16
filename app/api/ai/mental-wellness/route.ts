@@ -19,13 +19,18 @@ CRITICAL RULES:
 3. Keep conversational responses warm, concise, and focused on supportive listening, mindfulness, general coping strategies (e.g. deep breathing, physical movement), and encouraging them to reach out to professional therapists if needed.
 `;
 
-async function callGemini(systemPrompt: string, contents: any[]) {
+interface GeminiContentPart {
+  role: string;
+  parts: { text: string }[];
+}
+
+async function callGemini(systemPrompt: string, contents: GeminiContentPart[]) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("Missing GEMINI_API_KEY in environment variables");
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -67,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Map messages to Gemini API format
-    const contents = messages.map((msg: any) => ({
+    const contents: GeminiContentPart[] = messages.map((msg: { role: string; content: string }) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.content }],
     }));
@@ -109,8 +114,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ reply, sessionId: activeSessionId });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal Server Error";
     console.error("Mental wellness API error:", error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
