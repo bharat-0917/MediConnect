@@ -1,0 +1,318 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// NOTE on Enums and JSON in SQLite:
+// 1. SQLite does not support native Enums. These fields are defined as String
+//    with application-level validation. Comments indicate their equivalent enums
+//    for future Postgres migrations.
+// 2. SQLite does not support native JSON types. JSON structures (objects/arrays)
+//    are stored as serialized String fields and parsed in application code.
+
+// ==========================================
+// NextAuth.js v5 required models & User
+// ==========================================
+
+model User {
+  id                  String               @id @default(cuid())
+  name                String?
+  email               String?              @unique
+  emailVerified       DateTime?
+  image               String?
+  passwordHash        String?              // Nullable for OAuth accounts
+  
+  // Role: "PATIENT" | "DOCTOR" | "ADMIN"
+  role                String               @default("PATIENT")
+  
+  phone               String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  accounts            Account[]
+  sessions            Session[]
+  
+  // Custom Profile Relations
+  doctorProfile       DoctorProfile?
+  patientProfile      PatientProfile?
+  uploadedLabReports  LabReport[]          @relation("UploadedReports")
+  guardianPatients    PatientProfile[]     @relation("GuardianPatients")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==========================================
+// Healthcare Domain Models
+// ==========================================
+
+model DoctorProfile {
+  id                  String                    @id @default(cuid())
+  userId              String                    @unique
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization      String
+  qualifications      String
+  hospitalAffiliation String
+  licenseNumber       String
+  bio                 String?
+  consultationFee     Float
+  isVerified          Boolean                   @default(false)
+  
+  // Relations
+  availableSlots      AvailableSlot[]
+  connections         DoctorPatientConnection[]
+  appointments        Appointment[]
+  prescriptions       Prescription[]
+  accessLogs          AccessLog[]
+}
+
+model PatientProfile {
+  id               String                    @id @default(cuid())
+  userId           String                    @unique
+  user             User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth      DateTime
+  gender           String
+  bloodGroup       String?
+  emergencyContact String
+  address          String?
+  goals            String?                   // JSON string representing user-set targets
+  guardianUserId   String?
+  guardian         User?                     @relation("GuardianPatients", fields: [guardianUserId], references: [id], onDelete: SetNull)
+  
+  // Relations
+  connections      DoctorPatientConnection[]
+  appointments     Appointment[]
+  prescriptions    Prescription[]
+  labReports       LabReport[]
+  symptomSessions  SymptomCheckSession[]
+  mentalSessions   MentalHealthSession[]
+  metrics          HealthMetric[]
+  vaccines         VaccineRecord[]
+  accessLogs       AccessLog[]
+
+  @@index([guardianUserId])
+}
+
+model AvailableSlot {
+  id              String        @id @default(cuid())
+  doctorProfileId String
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  start           DateTime
+  end             DateTime
+  isBooked        Boolean       @default(false)
+
+  @@index([doctorProfileId])
+}
+
+model DoctorPatientConnection {
+  id        String           @id @default(cuid())
+  doctorId  String
+  doctor    DoctorProfile    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patientId String
+  patient   PatientProfile   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  
+  // Status: "PENDING" | "ACTIVE" | "ENDED"
+  status    String           @default("PENDING")
+  
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([doctorId, patientId])
+  @@index([doctorId])
+  @@index([patientId])
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  doctorId       String
+  doctor         DoctorProfile     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patientId      String
+  patient        PatientProfile    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  scheduledAt    DateTime
+  
+  // Status: "REQUESTED" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
+  status         String            @default("REQUESTED")
+  
+  // Type: "IN_PERSON" | "VIRTUAL"
+  type           String
+  
+  reasonForVisit String
+  notes          String?
+  
+  // Relations
+  consultation          Consultation?
+  prescriptions         Prescription[]
+  symptomCheckSessionId String?               @unique
+  symptomCheckSession   SymptomCheckSession?  @relation(fields: [symptomCheckSessionId], references: [id], onDelete: SetNull)
+
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([symptomCheckSessionId])
+}
+
+model Consultation {
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  videoRoomId   String?     // For virtual visits
+  doctorNotes   String?
+  startedAt     DateTime?
+  endedAt       DateTime?
+
+  @@index([appointmentId])
+}
+
+model Prescription {
+  id            String       @id @default(cuid())
+  doctorId      String
+  doctor        DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patientId     String
+  patient       PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  
+  // Medicines: JSON string representing array of {name, dosage, frequency, duration}
+  medicines     String       
+  
+  issuedAt      DateTime     @default(now())
+  pdfUrl        String?      // Link to compiled pdf copy
+
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([appointmentId])
+}
+
+model LabReport {
+  id                 String         @id @default(cuid())
+  patientId          String
+  patient            PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  uploadedByUserId   String
+  uploadedBy         User           @relation("UploadedReports", fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+  title              String         @default("Lab Report")
+  fileUrl            String
+  fileType           String
+  aiSummary          String?
+  
+  // aiFlaggedAnomalies: JSON string representing structured AI output
+  aiFlaggedAnomalies String?        
+  
+  uploadedAt         DateTime       @default(now())
+
+  @@index([patientId])
+  @@index([uploadedByUserId])
+}
+
+model SymptomCheckSession {
+  id              String         @id @default(cuid())
+  patientId       String
+  patient         PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  
+  // conversationLog: JSON string representing full chat history array
+  conversationLog String         
+  
+  aiSummary       String
+  createdAt       DateTime       @default(now())
+  
+  // Back-relation to Appointment
+  appointments    Appointment[]
+
+  @@index([patientId])
+}
+
+model MentalHealthSession {
+  id             String         @id @default(cuid())
+  patientId      String
+  patient        PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  
+  // conversationLog: JSON string representing full chat history array
+  conversationLog String         
+  
+  createdAt      DateTime       @default(now())
+
+  @@index([patientId])
+}
+
+model HealthMetric {
+  id         String           @id @default(cuid())
+  patientId  String
+  patient    PatientProfile   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  
+  // Type: "WEIGHT" | "BLOOD_PRESSURE" | "BLOOD_SUGAR" | "SLEEP" | "STEPS" | "HEART_RATE"
+  type       String
+  
+  // value: JSON string representing compound metrics (e.g. { systolic: 120, diastolic: 80 })
+  value      String           
+  
+  recordedAt DateTime         @default(now())
+
+  @@index([patientId])
+}
+
+model VaccineRecord {
+  id               String        @id @default(cuid())
+  patientId        String
+  patient          PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  vaccineName      String
+  doseNumber       Int
+  scheduledDate    DateTime
+  administeredDate DateTime?
+  
+  // Status: "UPCOMING" | "DUE" | "COMPLETED" | "MISSED"
+  status           String        @default("UPCOMING")
+  
+  administeredBy   String?
+
+  @@index([patientId])
+}
+
+model AccessLog {
+  id         String         @id @default(cuid())
+  doctorId   String
+  doctor     DoctorProfile  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patientId  String
+  patient    PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  accessedAt DateTime       @default(now())
+
+  @@index([doctorId])
+  @@index([patientId])
+}
