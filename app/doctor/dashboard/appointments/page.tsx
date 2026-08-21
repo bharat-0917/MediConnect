@@ -315,13 +315,21 @@ export default function DoctorAppointmentsPage() {
                         &ldquo;{appt.reasonForVisit}&rdquo;
                       </p>
 
-                      {/* Deep Link to Consolidated Patient View */}
-                      <Link
-                        href={`/doctor/dashboard/patients/${appt.patient.id}`}
-                        className="w-full py-2.5 bg-[#E0F2E7] hover:bg-[#D0EBD9] text-[#042618] font-bold rounded-2xl text-center text-xs transition-all block border border-[#C1E5D0] shadow-warm-sm mb-3"
-                      >
-                        Open Consolidated Patient Record →
-                      </Link>
+                      {/* Deep Link to Consolidated Patient View & Prescriptions */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                        <Link
+                          href={`/doctor/dashboard/patients/${appt.patient.id}`}
+                          className="w-full py-2.5 bg-[#E0F2E7] hover:bg-[#D0EBD9] text-[#042618] font-bold rounded-2xl text-center text-xs transition-all block border border-[#C1E5D0] shadow-warm-sm"
+                        >
+                          Patient EHR Chart →
+                        </Link>
+                        <Link
+                          href={`/doctor/dashboard/patients/${appt.patient.id}/prescribe`}
+                          className="w-full py-2.5 bg-white hover:bg-stone-50 text-stone-800 font-bold rounded-2xl text-center text-xs transition-all block border border-stone-200 shadow-warm-sm"
+                        >
+                          + Write Prescription
+                        </Link>
+                      </div>
                     </div>
 
                     {appt.type === "VIRTUAL" && appt.status === "CONFIRMED" && (

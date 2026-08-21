@@ -176,6 +176,14 @@ export default function ConsolidatedRecordView({
               Patient: <span className="text-[#042618] font-bold">{patient.user.name}</span>
             </p>
           </div>
+
+          <Link
+            href={`/doctor/dashboard/patients/${patient.id}/prescribe`}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs transition-all shadow-warm-sm hover:shadow-warm-md w-fit shrink-0"
+          >
+            <Pill className="w-4 h-4" />
+            <span>+ Issue Digital Prescription</span>
+          </Link>
         </header>
 
         {/* Tabs Bar */}
@@ -316,14 +324,23 @@ export default function ConsolidatedRecordView({
           {/* PRESCRIPTIONS TAB */}
           {activeTab === "prescriptions" && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center border-b border-stone-100 pb-3 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-3 mb-4">
                 <div className="flex items-center gap-2">
                   <Pill className="w-5 h-5 text-[#042618]" />
                   <h3 className="text-base font-bold text-[#042618]">Prescription History</h3>
                 </div>
-                <span className="text-xs text-stone-500 italic">
-                  Note: Reflects prescriptions issued by all connected practitioners
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-stone-500 italic hidden md:inline">
+                    Reflects prescriptions issued by all connected practitioners
+                  </span>
+                  <Link
+                    href={`/doctor/dashboard/patients/${patient.id}/prescribe`}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-[#E0F2E7] hover:bg-[#C1E5D0] text-[#042618] font-bold rounded-xl text-xs transition-all border border-[#C1E5D0]"
+                  >
+                    <Pill className="w-3.5 h-3.5" />
+                    <span>+ Issue New Prescription</span>
+                  </Link>
+                </div>
               </div>
 
               {prescriptions.length === 0 ? (
