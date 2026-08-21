@@ -93,6 +93,29 @@ export default function PatientDashboard() {
     }
   }, [status, router]);
 
+  // Fast session fallback: if status stays loading for > 1.5s, fetch session directly
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (status === "loading") {
+      timer = setTimeout(async () => {
+        try {
+          const res = await fetch("/api/auth/session");
+          if (res.ok) {
+            const data = await res.json();
+            if (!data?.user) {
+              router.push("/auth/patient");
+            }
+          }
+        } catch {
+          // ignore
+        } finally {
+          setLoading(false);
+        }
+      }, 1500);
+    }
+    return () => clearTimeout(timer);
+  }, [status, router]);
+
   const fetchData = async () => {
     if (session?.user?.id) {
       try {
@@ -124,12 +147,14 @@ export default function PatientDashboard() {
       } finally {
         setLoading(false);
       }
+    } else if (status === "authenticated" && !session?.user?.id) {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
-  }, [session]);
+  }, [session, status]);
 
   const isJoinable = (appt: Appointment) => {
     if (appt.status !== "CONFIRMED" || appt.type !== "VIRTUAL") return false;
@@ -158,7 +183,7 @@ export default function PatientDashboard() {
     (r) => Array.isArray(r.aiFlaggedAnomalies) && r.aiFlaggedAnomalies.length > 0
   ).length;
 
-  if (status === "loading" || loading) {
+  if (status === "loading" && loading) {
     return (
       <div className="min-h-screen bg-[#FAF9F5] text-stone-700 flex items-center justify-center font-sans">
         <div className="flex items-center gap-3 bg-white px-7 py-4 rounded-3xl border border-stone-200/80 shadow-warm-md">

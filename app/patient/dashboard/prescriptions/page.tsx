@@ -39,25 +39,50 @@ export default function PatientPrescriptionsPage() {
     }
   }, [status, router]);
 
+  // Fast session fallback: if status stays loading for > 1.5s, fetch session directly
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (status === "loading") {
+      timer = setTimeout(async () => {
+        try {
+          const res = await fetch("/api/auth/session");
+          if (res.ok) {
+            const data = await res.json();
+            if (!data?.user) {
+              router.push("/auth/patient");
+            }
+          }
+        } catch {
+          // ignore
+        } finally {
+          setLoading(false);
+        }
+      }, 1500);
+    }
+    return () => clearTimeout(timer);
+  }, [status, router]);
+
   const fetchPrescriptions = async () => {
     if (session?.user?.id) {
       try {
         const res = await fetch("/api/patient/prescriptions");
         if (res.ok) {
           const data = await res.json();
-          setPrescriptions(data);
+          setPrescriptions(Array.isArray(data) ? data : []);
         }
       } catch (err) {
         console.error("Failed to load prescriptions:", err);
       } finally {
         setLoading(false);
       }
+    } else if (status === "authenticated" && !session?.user?.id) {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchPrescriptions();
-  }, [session]);
+  }, [session, status]);
 
   const parseMedications = (jsonStr: string): Medication[] => {
     try {
@@ -74,7 +99,7 @@ export default function PatientPrescriptionsPage() {
     medications.forEach((med) => {
       const match = med.duration.match(/(\d+)\s*(day|week|month)/i);
       if (match) {
-        const count = parseInt(match[1]);
+        const count = parseInt(match[1], 10);
         const unit = match[2].toLowerCase();
         let days = count;
         if (unit.startsWith("week")) days = count * 7;
@@ -87,12 +112,12 @@ export default function PatientPrescriptionsPage() {
     return Date.now() < expiryTime ? "ACTIVE" : "PAST";
   };
 
-  if (status === "loading" || loading) {
+  if (status === "loading" && loading) {
     return (
       <div className="min-h-screen bg-[#FAF9F5] text-stone-700 flex items-center justify-center font-sans">
-        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border border-stone-200/80 shadow-warm-sm">
+        <div className="flex items-center gap-3 bg-white px-7 py-4 rounded-3xl border border-stone-200/80 shadow-warm-md">
           <HeartPulse className="w-5 h-5 text-[#042618] animate-pulse" />
-          <div className="text-sm font-semibold text-[#042618]">Loading Prescriptions...</div>
+          <div className="text-sm font-bold text-[#042618]">Loading Prescriptions...</div>
         </div>
       </div>
     );
@@ -163,7 +188,9 @@ export default function PatientPrescriptionsPage() {
                     <div>
                       <div className="flex justify-between items-start gap-4 mb-4 pb-3 border-b border-stone-100">
                         <div>
-                          <h3 className="font-bold text-base text-[#042618]">Dr. {appt.doctor.user.name}</h3>
+                          <h3 className="font-bold text-base text-[#042618]">
+                            {appt.doctor.user.name?.startsWith("Dr.") ? appt.doctor.user.name : `Dr. ${appt.doctor.user.name}`}
+                          </h3>
                           <p className="text-xs text-[#0F3824] font-medium">{appt.doctor.specialization}</p>
                         </div>
                         <span className="text-[11px] text-stone-500 font-mono bg-stone-50 px-2.5 py-1 rounded-xl border border-stone-200">
@@ -227,7 +254,9 @@ export default function PatientPrescriptionsPage() {
                     <div>
                       <div className="flex justify-between items-start gap-4 mb-4 pb-3 border-b border-stone-100">
                         <div>
-                          <h3 className="font-bold text-sm text-stone-700">Dr. {appt.doctor.user.name}</h3>
+                          <h3 className="font-bold text-sm text-stone-700">
+                            {appt.doctor.user.name?.startsWith("Dr.") ? appt.doctor.user.name : `Dr. ${appt.doctor.user.name}`}
+                          </h3>
                           <p className="text-xs text-stone-500">{appt.doctor.specialization}</p>
                         </div>
                         <span className="text-[11px] text-stone-500 font-mono">

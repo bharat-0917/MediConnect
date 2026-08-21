@@ -69,8 +69,7 @@ export default function DoctorAuthPage() {
       if (res?.error) {
         setError("Invalid email or password");
       } else {
-        router.push("/doctor/dashboard");
-        router.refresh();
+        window.location.href = "/doctor/dashboard";
       }
     } catch (err) {
       console.error(err);

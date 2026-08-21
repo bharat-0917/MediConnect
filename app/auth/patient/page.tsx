@@ -70,8 +70,7 @@ export default function PatientAuthPage() {
       if (res?.error) {
         setError("Invalid email or password");
       } else {
-        router.push("/patient/dashboard");
-        router.refresh();
+        window.location.href = "/patient/dashboard";
       }
     } catch (err) {
       console.error(err);

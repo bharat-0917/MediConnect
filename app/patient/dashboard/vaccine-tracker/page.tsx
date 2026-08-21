@@ -65,12 +65,35 @@ export default function VaccineTrackerPage() {
     }
   }, [status, router]);
 
+  // Fast session fallback: if status stays loading for > 1.5s, fetch session directly
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (status === "loading") {
+      timer = setTimeout(async () => {
+        try {
+          const res = await fetch("/api/auth/session");
+          if (res.ok) {
+            const data = await res.json();
+            if (!data?.user) {
+              router.push("/auth/patient");
+            }
+          }
+        } catch {
+          // ignore
+        } finally {
+          setLoading(false);
+        }
+      }, 1500);
+    }
+    return () => clearTimeout(timer);
+  }, [status, router]);
+
   const loadDependents = async () => {
     try {
       const res = await fetch("/api/patient/dependents");
       if (res.ok) {
         const data = await res.json();
-        setDependents(data);
+        setDependents(Array.isArray(data) ? data : []);
         if (data.length > 0 && !selectedChildId) {
           setSelectedChildId(data[0].id);
         }
@@ -83,10 +106,8 @@ export default function VaccineTrackerPage() {
   };
 
   useEffect(() => {
-    if (session?.user?.id) {
-      loadDependents();
-    }
-  }, [session]);
+    loadDependents();
+  }, [session, status]);
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,12 +167,12 @@ export default function VaccineTrackerPage() {
     return "DUE";
   };
 
-  if (status === "loading" || loading) {
+  if (status === "loading" && loading) {
     return (
       <div className="min-h-screen bg-[#FAF9F5] text-stone-700 flex items-center justify-center font-sans">
-        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl border border-stone-200/80 shadow-warm-sm">
+        <div className="flex items-center gap-3 bg-white px-7 py-4 rounded-3xl border border-stone-200/80 shadow-warm-md">
           <HeartPulse className="w-5 h-5 text-[#042618] animate-pulse" />
-          <div className="text-sm font-semibold text-[#042618]">Loading Vaccine Tracker...</div>
+          <div className="text-sm font-bold text-[#042618]">Loading Vaccine Tracker...</div>
         </div>
       </div>
     );
