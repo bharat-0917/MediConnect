@@ -32,8 +32,8 @@ export async function GET(
       where: {
         doctorProfileId: doctor.id,
         isBooked: false,
-        start: {
-          gt: new Date(), // Only upcoming slots
+        end: {
+          gt: new Date(), // Any slot that has not yet ended
         },
       },
       orderBy: { start: "asc" },

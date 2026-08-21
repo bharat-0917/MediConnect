@@ -40,7 +40,9 @@ export async function createAvailableSlot(
       },
     });
 
-    revalidatePath("/doctor/dashboard/availability");
+    revalidatePath("/doctor/availability");
+    revalidatePath("/patient/dashboard/find-doctor");
+    revalidatePath("/patient/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Failed to create available slot:", error);
@@ -74,7 +76,9 @@ export async function deleteAvailableSlot(doctorUserId: string, slotId: string) 
       where: { id: slotId },
     });
 
-    revalidatePath("/doctor/dashboard/availability");
+    revalidatePath("/doctor/availability");
+    revalidatePath("/patient/dashboard/find-doctor");
+    revalidatePath("/patient/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete available slot:", error);

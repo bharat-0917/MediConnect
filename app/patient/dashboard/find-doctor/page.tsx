@@ -4,7 +4,13 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { Search, ArrowLeft, Stethoscope, Building2, GraduationCap, HeartPulse } from "lucide-react";
+import { Search, ArrowLeft, Stethoscope, Building2, GraduationCap, HeartPulse, Clock } from "lucide-react";
+
+interface AvailableSlotInfo {
+  id: string;
+  start: string;
+  end: string;
+}
 
 interface Doctor {
   id: string;
@@ -16,6 +22,7 @@ interface Doctor {
     name: string;
     phone: string;
   };
+  availableSlots?: AvailableSlotInfo[];
 }
 
 function FindDoctorContent() {
@@ -121,7 +128,7 @@ function FindDoctorContent() {
                   <div className="flex justify-between items-start gap-4 mb-3">
                     <div>
                       <h2 className="text-xl font-bold text-[#042618] leading-tight">
-                        Dr. {doc.user.name}
+                        {doc.user.name.startsWith("Dr.") ? doc.user.name : `Dr. ${doc.user.name}`}
                       </h2>
                       <p className="text-xs font-bold text-[#0F3824] mt-0.5">
                         {doc.specialization}
@@ -130,6 +137,21 @@ function FindDoctorContent() {
                     <span className="text-xs font-bold text-[#042618] bg-[#E0F2E7] px-3 py-1.5 rounded-xl shrink-0 border border-[#C1E5D0]">
                       ${doc.consultationFee} / session
                     </span>
+                  </div>
+
+                  {/* Live Slot Status Pill */}
+                  <div className="mt-2 mb-3">
+                    {doc.availableSlots && doc.availableSlots.length > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#042618] bg-[#E0F2E7] px-3 py-1 rounded-full border border-[#C1E5D0]">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{doc.availableSlots.length} available slot{doc.availableSlots.length > 1 ? "s" : ""}</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-500 bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>No open slots right now</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="space-y-2.5 text-xs text-stone-600 mb-8 border-t border-stone-100 pt-5 mt-5">

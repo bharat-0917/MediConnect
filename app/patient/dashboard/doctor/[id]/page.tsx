@@ -162,7 +162,7 @@ function DoctorProfileContent() {
               </Link>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#042618]">
-              Dr. {doctor?.user.name}
+              {doctor?.user.name?.startsWith("Dr.") ? doctor.user.name : `Dr. ${doctor?.user.name}`}
             </h1>
             <p className="text-stone-600 text-sm mt-0.5">{doctor?.specialization} Specialist</p>
           </div>
@@ -175,7 +175,7 @@ function DoctorProfileContent() {
             </div>
             <h2 className="text-2xl font-bold text-[#042618] mb-2">Booking Request Submitted</h2>
             <p className="text-stone-600 text-sm mb-8 leading-relaxed">
-              Your consultation request has been forwarded to Dr. {doctor?.user.name}. You will be notified once confirmed.
+              Your consultation request has been forwarded to {doctor?.user.name?.startsWith("Dr.") ? doctor.user.name : `Dr. ${doctor?.user.name}`}. You will be notified once confirmed.
             </p>
             <button
               onClick={() => router.push("/patient/dashboard")}

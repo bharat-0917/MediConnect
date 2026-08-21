@@ -17,6 +17,20 @@ export async function GET() {
             phone: true,
           },
         },
+        availableSlots: {
+          where: {
+            isBooked: false,
+            end: {
+              gt: new Date(),
+            },
+          },
+          orderBy: { start: "asc" },
+          select: {
+            id: true,
+            start: true,
+            end: true,
+          },
+        },
       },
     });
 
