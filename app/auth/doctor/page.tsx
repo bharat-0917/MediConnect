@@ -169,7 +169,7 @@ export default function DoctorAuthPage() {
 
         {/* Forms */}
         {activeTab === "login" ? (
-          <form onSubmit={handleLoginSubmit(onLogin)} className="space-y-5">
+          <form method="POST" onSubmit={handleLoginSubmit(onLogin)} className="space-y-5">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
                 Email Address
