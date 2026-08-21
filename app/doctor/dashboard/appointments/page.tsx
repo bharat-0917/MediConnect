@@ -63,25 +63,50 @@ export default function DoctorAppointmentsPage() {
     }
   }, [status, router]);
 
+  // Fast session fallback: if status stays loading for > 1.5s, fetch session directly
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (status === "loading") {
+      timer = setTimeout(async () => {
+        try {
+          const res = await fetch("/api/auth/session");
+          if (res.ok) {
+            const data = await res.json();
+            if (!data?.user) {
+              router.push("/auth/doctor");
+            }
+          }
+        } catch {
+          // ignore
+        } finally {
+          setLoading(false);
+        }
+      }, 1500);
+    }
+    return () => clearTimeout(timer);
+  }, [status, router]);
+
   const fetchAppointments = async () => {
     if (session?.user?.id) {
       try {
         const res = await fetch(`/api/doctor/appointments?userId=${session.user.id}`);
         if (res.ok) {
           const data = await res.json();
-          setAppointments(data);
+          setAppointments(Array.isArray(data) ? data : []);
         }
       } catch (err) {
         console.error("Failed to load appointments:", err);
       } finally {
         setLoading(false);
       }
+    } else if (status === "authenticated" && !session?.user?.id) {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchAppointments();
-  }, [session]);
+  }, [session, status]);
 
   const handleAccept = async (id: string) => {
     if (!session?.user?.id) return;
