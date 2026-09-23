@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { 
   Calendar, 
   Sparkles, 
@@ -22,8 +23,12 @@ import {
   Stethoscope,
   Plus,
   User,
-  X
+  X,
+  QrCode
 } from "lucide-react";
+
+// Dynamically import QR code (client-only, avoids SSR issues)
+const PatientQRCode = dynamic(() => import("./PatientQRCode"), { ssr: false });
 
 interface PatientProfile {
   id: string;
@@ -712,80 +717,120 @@ export default function PatientDashboard() {
 
         {/* Patient Demographics Modal */}
         {showProfileModal && (
-          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white border border-stone-200/80 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-warm-lg space-y-6 animate-in fade-in zoom-in-95">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+          <div
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowProfileModal(false); }}
+          >
+            <div className="bg-white border border-stone-200/80 rounded-3xl max-w-2xl w-full shadow-warm-lg flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95">
+
+              {/* ── Sticky Header ── */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-stone-100 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[#E0F2E7] text-[#042618] flex items-center justify-center shadow-warm-sm">
+                  <div className="w-10 h-10 rounded-2xl bg-[#E0F2E7] flex items-center justify-center shadow-warm-sm shrink-0">
                     <User className="w-5 h-5 text-[#0F3824]" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg text-[#042618]">Patient Demographics Card</h3>
-                    <p className="text-stone-500 text-xs">Personal health & contact details on file</p>
+                    <h3 className="font-bold text-base text-[#042618]">Patient Health Card</h3>
+                    <p className="text-stone-500 text-xs">Personal details &amp; scan QR code</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowProfileModal(false)}
-                  className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center text-sm font-bold transition-all"
+                  className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center transition-all shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {profile ? (
-                <div className="bg-stone-50/70 border border-stone-200/80 rounded-2xl p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 text-xs">
-                    <div>
-                      <span className="text-stone-500 block mb-1 font-medium">Date of Birth</span>
-                      <span className="text-stone-900 font-bold text-sm">
-                        {profile.dateOfBirth
-                          ? new Date(profile.dateOfBirth).toLocaleDateString(undefined, {
-                              month: "numeric",
-                              day: "numeric",
-                              year: "numeric",
-                            })
-                          : "Not specified"}
-                      </span>
+              {/* ── Scrollable Body ── */}
+              <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+
+                {profile ? (
+                  <>
+                    {/* Demographics grid — compact */}
+                    <div className="bg-stone-50/80 border border-stone-200/70 rounded-2xl p-5">
+                      <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs">
+                        <div>
+                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Date of Birth</span>
+                          <span className="text-stone-900 font-bold text-sm">
+                            {profile.dateOfBirth
+                              ? new Date(profile.dateOfBirth).toLocaleDateString(undefined, { month: "numeric", day: "numeric", year: "numeric" })
+                              : "Not specified"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Gender</span>
+                          <span className="text-stone-900 font-bold text-sm">{profile.gender || "Not specified"}</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Blood Group</span>
+                          <span className="text-stone-900 font-bold text-sm">{profile.bloodGroup || "Not specified"}</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Emergency Contact</span>
+                          <span className="text-stone-900 font-bold text-sm">{profile.emergencyContact || "Not specified"}</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Phone</span>
+                          <span className="text-stone-900 font-bold text-sm">{profile.user.phone || "Not specified"}</span>
+                        </div>
+                        <div>
+                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Email</span>
+                          <span className="text-stone-900 font-bold text-sm truncate">{profile.user.email || "Not specified"}</span>
+                        </div>
+                        <div className="col-span-2 border-t border-stone-200/60 pt-3">
+                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Home Address</span>
+                          <span className="text-stone-900 font-bold text-sm">{profile.address || "Not specified"}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <span className="text-stone-500 block mb-1 font-medium">Gender</span>
-                      <span className="text-stone-900 font-bold text-sm">{profile.gender || "Not specified"}</span>
-                    </div>
+                    {/* QR Code — side-by-side on sm+, stacked on mobile */}
+                    <div className="bg-[#F0F9F3] border border-[#C1E5D0] rounded-2xl p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <QrCode className="w-4 h-4 text-[#042618]" />
+                        <span className="text-xs font-bold text-[#042618] uppercase tracking-wide">Health Card QR Code</span>
+                      </div>
 
-                    <div>
-                      <span className="text-stone-500 block mb-1 font-medium">Blood Group</span>
-                      <span className="text-stone-900 font-bold text-sm">{profile.bloodGroup || "Not specified"}</span>
-                    </div>
+                      <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
+                        {/* QR Code image */}
+                        <div className="shrink-0 p-3 bg-white border border-[#C1E5D0] rounded-2xl shadow-warm-sm">
+                          <PatientQRCode
+                            patientId={profile.id}
+                            patientName={profile.user.name || "Patient"}
+                          />
+                        </div>
 
-                    <div>
-                      <span className="text-stone-500 block mb-1 font-medium">Emergency Contact</span>
-                      <span className="text-stone-900 font-bold text-sm">{profile.emergencyContact || "Not specified"}</span>
+                        {/* Instructions */}
+                        <div className="flex flex-col justify-center gap-3 text-xs text-stone-600 sm:pt-2">
+                          <div className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+                            <span>Open MediConnect on the doctor&apos;s device</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+                            <span>Tap <strong>&ldquo;Scan Patient QR&rdquo;</strong> in their dashboard header</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
+                            <span>Point the camera at this QR code — your full health record loads instantly</span>
+                          </div>
+                          <p className="text-[11px] text-stone-400 mt-1 italic leading-relaxed border-t border-[#C1E5D0] pt-2">
+                            Every scan is audit-logged and visible in your EHR Access History.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-
-                    <div>
-                      <span className="text-stone-500 block mb-1 font-medium">Contact Phone</span>
-                      <span className="text-stone-900 font-bold text-sm">{profile.user.phone || "Not specified"}</span>
-                    </div>
-
-                    <div>
-                      <span className="text-stone-500 block mb-1 font-medium">Email Address</span>
-                      <span className="text-stone-900 font-bold text-sm">{profile.user.email || "Not specified"}</span>
-                    </div>
-
-                    <div className="sm:col-span-2 border-t border-stone-200/60 pt-4 mt-1">
-                      <span className="text-stone-500 block mb-1 font-medium">Home Address</span>
-                      <span className="text-stone-900 font-bold text-sm">{profile.address || "Not specified"}</span>
-                    </div>
+                  </>
+                ) : (
+                  <div className="py-12 text-center text-stone-500 text-xs">
+                    Loading patient profile...
                   </div>
-                </div>
-              ) : (
-                <div className="p-6 text-center text-stone-500 text-xs">
-                  Loading patient profile information...
-                </div>
-              )}
+                )}
+              </div>
 
-              <div className="pt-2 border-t border-stone-100 flex justify-end">
+              {/* ── Sticky Footer ── */}
+              <div className="px-6 py-4 border-t border-stone-100 flex justify-end shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowProfileModal(false)}

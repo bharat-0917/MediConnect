@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { 
   Calendar, 
   Clock, 
@@ -15,8 +16,12 @@ import {
   LogOut,
   HeartPulse,
   Plus,
-  AlertCircle
+  AlertCircle,
+  QrCode
 } from "lucide-react";
+
+// Dynamically import the QR scanner (uses browser camera APIs)
+const QRScannerModal = dynamic(() => import("./QRScannerModal"), { ssr: false });
 
 interface Appointment {
   id: string;
@@ -37,6 +42,8 @@ export default function DoctorDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showScanner, setShowScanner] = useState(false);
+
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -153,7 +160,15 @@ export default function DoctorDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => setShowScanner(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#E0F2E7] hover:bg-[#D0EBD9] text-[#042618] font-bold rounded-2xl text-xs transition-all border border-[#C1E5D0] shadow-warm-sm hover:shadow-warm-md"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Scan Patient QR</span>
+            </button>
+
             <Link
               href="/doctor/availability"
               className="flex items-center gap-2 px-5 py-2.5 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs transition-all shadow-warm-sm hover:shadow-warm-md"
@@ -339,9 +354,40 @@ export default function DoctorDashboard() {
                 </div>
               </div>
             </Link>
+
+            {/* Card 4: Walk-in QR Scan */}
+            <button onClick={() => setShowScanner(true)} className="group text-left">
+              <div className="h-full p-7 rounded-3xl bg-white border border-stone-200/80 hover:border-[#042618]/30 transition-all duration-300 flex flex-col justify-between shadow-warm-sm hover:shadow-warm-md hover:-translate-y-1">
+                <div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-[#E0F2E7] flex items-center justify-center text-[#042618] shadow-warm-sm group-hover:scale-105 transition-transform">
+                      <QrCode className="w-6 h-6" />
+                    </div>
+                    <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
+                      Walk-in
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold mb-1.5 text-[#042618] group-hover:text-[#0F3824] transition-colors">
+                    Scan Patient QR Card
+                  </h3>
+                  <p className="text-stone-600 text-xs leading-relaxed font-normal">
+                    Instantly access a patient&apos;s full health record by scanning their MediConnect QR card — no appointment required. Access is audit-logged.
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-stone-100 text-xs font-bold text-[#042618] flex items-center gap-1.5">
+                  <span>Open QR Scanner</span>
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
+              </div>
+            </button>
           </div>
         </section>
       </div>
+
+      {/* QR Scanner Modal */}
+      {showScanner && (
+        <QRScannerModal onClose={() => setShowScanner(false)} />
+      )}
     </div>
   );
 }

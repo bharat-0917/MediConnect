@@ -57,6 +57,16 @@ const config: Config = {
         'warm-lg': '0 16px 36px -6px rgba(4, 38, 24, 0.08), 0 4px 12px -2px rgba(4, 38, 24, 0.04)',
         'warm-hover': '0 20px 40px -8px rgba(4, 38, 24, 0.12), 0 6px 16px -4px rgba(4, 38, 24, 0.06)',
       },
+      keyframes: {
+        'scan-line': {
+          '0%':   { top: '8px' },
+          '50%':  { top: 'calc(100% - 8px)' },
+          '100%': { top: '8px' },
+        },
+      },
+      animation: {
+        'scan-line': 'scan-line 2s ease-in-out infinite',
+      },
     },
   },
   plugins: [],
