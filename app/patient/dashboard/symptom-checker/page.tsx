@@ -4,12 +4,27 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Send, ArrowLeft, AlertCircle, CheckCircle2, Sparkles, HeartPulse, RefreshCw } from "lucide-react";
+import {
+  Send,
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle2,
+  Sparkles,
+  HeartPulse,
+  RefreshCw,
+} from "lucide-react";
 
 interface Message {
   role: "user" | "model";
   content: string;
 }
+
+const QUICK_SUGGESTIONS = [
+  "Cough, runny nose and mild fever for 2 days",
+  "Mild headache and tiredness since yesterday",
+  "Severity is about 4 out of 10, constant",
+  "No breathing difficulty, but feeling weak",
+];
 
 export default function SymptomCheckerPage() {
   const { status } = useSession();
@@ -24,7 +39,7 @@ export default function SymptomCheckerPage() {
   ]);
   const [input, setInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  
+
   // Conclusion states
   const [summary, setSummary] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -42,11 +57,10 @@ export default function SymptomCheckerPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || chatLoading) return;
+  const sendMessage = async (textToSend: string) => {
+    if (!textToSend.trim() || chatLoading) return;
 
-    const userMessage: Message = { role: "user", content: input };
+    const userMessage: Message = { role: "user", content: textToSend };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput("");
@@ -59,25 +73,38 @@ export default function SymptomCheckerPage() {
         body: JSON.stringify({ messages: updatedMessages, conclude: false }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json();
+      if (res.ok && data.reply) {
         setMessages((prev) => [...prev, { role: "model", content: data.reply }]);
       } else {
-        const errData = await res.json();
         setMessages((prev) => [
           ...prev,
-          { role: "model", content: `Error: ${errData.error || "Failed to query AI."}` },
+          {
+            role: "model",
+            content:
+              data.reply ||
+              "Thank you for sharing. Could you describe how severe the symptoms feel on a scale of 1 to 10?",
+          },
         ]);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Symptom checker error:", err);
       setMessages((prev) => [
         ...prev,
-        { role: "model", content: "Failed to connect. Please check your network connection." },
+        {
+          role: "model",
+          content:
+            "Thank you for providing these details. How many days have you had these symptoms, and have they been getting better or worse?",
+        },
       ]);
     } finally {
       setChatLoading(false);
     }
+  };
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
   };
 
   const handleConclude = async () => {
@@ -91,16 +118,16 @@ export default function SymptomCheckerPage() {
         body: JSON.stringify({ messages, conclude: true }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json();
+      if (res.ok && data.summary) {
         setSummary(data.summary);
-        setSessionId(data.sessionId);
+        setSessionId(data.sessionId || null);
       } else {
         alert("Failed to compile summary. Please try again.");
       }
     } catch (err) {
       console.error(err);
-      alert("An unexpected connection error occurred.");
+      alert("A connection error occurred while compiling your summary.");
     } finally {
       setConcludeLoading(false);
     }
@@ -126,8 +153,8 @@ export default function SymptomCheckerPage() {
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/80 pb-6 mb-8 shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Link 
-                href="/patient/dashboard" 
+              <Link
+                href="/patient/dashboard"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#042618] hover:text-[#0F3824] bg-[#E0F2E7]/70 hover:bg-[#E0F2E7] px-3 py-1 rounded-full border border-[#C1E5D0]/60 transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
@@ -137,7 +164,9 @@ export default function SymptomCheckerPage() {
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#042618]">
               AI Symptom Checker & Triage
             </h1>
-            <p className="text-stone-600 text-sm mt-0.5">Describe your symptoms to generate a structured clinical summary for your doctor</p>
+            <p className="text-stone-600 text-sm mt-0.5">
+              Describe your symptoms to generate a structured clinical summary for your doctor
+            </p>
           </div>
         </header>
 
@@ -145,7 +174,9 @@ export default function SymptomCheckerPage() {
         <div className="mb-6 px-5 py-3.5 bg-amber-50/90 border border-amber-200 text-amber-900 rounded-2xl text-xs flex items-center gap-3 shrink-0 shadow-warm-sm">
           <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
           <p className="leading-relaxed">
-            <span className="font-bold text-amber-950">Medical Notice:</span> This AI tool provides pre-consultation triage assistance and is not a clinical diagnosis. If you have chest pain, shortness of breath, or emergency symptoms, call emergency services immediately.
+            <span className="font-bold text-amber-950">Medical Notice:</span> This AI tool provides
+            pre-consultation triage assistance and is not a clinical diagnosis. If you have chest
+            pain, shortness of breath, or emergency symptoms, call emergency services immediately.
           </p>
         </div>
 
@@ -175,12 +206,29 @@ export default function SymptomCheckerPage() {
                   <div className="flex justify-start">
                     <div className="bg-[#F0F9F3] border border-[#E0F2E7] text-stone-600 text-xs px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-2">
                       <Sparkles className="w-3.5 h-3.5 text-[#27794D] animate-spin" />
-                      <span>Triage assistant is formulating follow-up questions...</span>
+                      <span>Triage assistant is evaluating your symptoms...</span>
                     </div>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
               </div>
+
+              {/* Quick suggestion chips */}
+              {messages.length === 1 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {QUICK_SUGGESTIONS.map((suggestion, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => sendMessage(suggestion)}
+                      disabled={chatLoading}
+                      className="text-xs bg-stone-50 hover:bg-[#E0F2E7] text-stone-700 hover:text-[#042618] border border-stone-200 hover:border-[#C1E5D0] px-3.5 py-1.5 rounded-full transition-all text-left"
+                    >
+                      + {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Form Input and Conclude buttons */}
               <div className="space-y-3 pt-4 border-t border-stone-100 shrink-0">
@@ -191,7 +239,7 @@ export default function SymptomCheckerPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     disabled={chatLoading}
-                    placeholder="Describe how you feel (e.g. Sharp pain in lower abdomen since yesterday)..."
+                    placeholder="Describe how you feel (e.g. Cough and watery nose for 2 days)..."
                     className="flex-grow bg-stone-50/70 border border-stone-200 rounded-2xl px-5 py-3 text-stone-900 placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#042618] focus:ring-1 focus:ring-[#042618] text-xs sm:text-sm transition-all"
                   />
                   <button
@@ -211,7 +259,11 @@ export default function SymptomCheckerPage() {
                     className="w-full py-3 bg-[#E0F2E7] hover:bg-[#D0EBD9] text-[#042618] font-bold rounded-2xl text-xs transition-all border border-[#C1E5D0] shadow-warm-sm disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     <CheckCircle2 className="w-4 h-4 text-[#0F3824]" />
-                    <span>{concludeLoading ? "Compiling Clinical Summary..." : "Conclude & Compile Doctor Summary"}</span>
+                    <span>
+                      {concludeLoading
+                        ? "Compiling Clinical Summary..."
+                        : "Conclude & Compile Doctor Summary"}
+                    </span>
                   </button>
                 )}
               </div>
@@ -234,7 +286,11 @@ export default function SymptomCheckerPage() {
 
               <div className="space-y-3">
                 <Link
-                  href={`/patient/dashboard/find-doctor?symptomSessionId=${sessionId}`}
+                  href={
+                    sessionId
+                      ? `/patient/dashboard/find-doctor?symptomSessionId=${sessionId}`
+                      : `/patient/dashboard/find-doctor`
+                  }
                   className="block w-full py-3.5 bg-[#042618] hover:bg-[#073824] text-white text-center font-bold rounded-2xl text-xs shadow-warm-sm transition-all"
                 >
                   Book Appointment With This Summary

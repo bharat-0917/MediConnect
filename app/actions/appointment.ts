@@ -314,11 +314,17 @@ export async function saveConsultationNotes(
     }
 
     await prisma.$transaction(async (tx) => {
-      // 1. Update Consultation record with notes and end timestamp
-      await tx.consultation.update({
+      // 1. Upsert Consultation record with notes and end timestamp (works for both VIRTUAL and IN_PERSON)
+      await tx.consultation.upsert({
         where: { appointmentId },
-        data: {
+        update: {
           doctorNotes: notes,
+          endedAt: new Date(),
+        },
+        create: {
+          appointmentId: appointmentId,
+          doctorNotes: notes,
+          startedAt: new Date(),
           endedAt: new Date(),
         },
       });
@@ -333,6 +339,8 @@ export async function saveConsultationNotes(
     });
 
     revalidatePath(`/consultation/${appointmentId}`);
+    revalidatePath("/doctor/dashboard/appointments");
+    revalidatePath(`/doctor/dashboard/patients/${appointment.patientId}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to save consultation notes:", error);

@@ -1,6 +1,12 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  callGeminiSafe,
+  generateLocalTriageReply,
+  generateLocalTriageSummary,
+  GeminiContentPart,
+} from "@/lib/gemini";
 
 const SYSTEM_PROMPT_CHAT = `
 You are a professional medical triage nurse for MediConnect. 
@@ -10,7 +16,7 @@ Guidelines:
 2. Avoid giving any definitive medical diagnosis.
 3. Avoid prescribing or recommending any specific medications.
 4. If the patient mentions severe warning signs (e.g. chest pain, difficulty breathing, sudden severe headache), immediately advise them to contact emergency services.
-5. Keep your responses concise, empathetic, and professional.
+5. Keep your responses concise, empathetic, and professional. Maximum 2-3 sentences.
 `;
 
 const SYSTEM_PROMPT_SUMMARY = `
@@ -29,45 +35,6 @@ Format the summary EXACTLY using the following markdown outline:
 Do not include any conversational text or other sections. Keep it highly readable and clean.
 `;
 
-interface GeminiContentPart {
-  role: string;
-  parts: { text: string }[];
-}
-
-async function callGemini(systemPrompt: string, contents: GeminiContentPart[]) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("Missing GEMINI_API_KEY in environment variables");
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      contents,
-      systemInstruction: {
-        parts: [{ text: systemPrompt }],
-      },
-      generationConfig: {
-        temperature: 0.2,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Gemini API error details:", errorText);
-    throw new Error(`Gemini API failed with status ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-}
-
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session || !session.user) {
@@ -81,15 +48,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid messages format" }, { status: 400 });
     }
 
-    // Map messages to Gemini API format
     const contents: GeminiContentPart[] = messages.map((msg: { role: string; content: string }) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.content }],
     }));
 
     if (conclude) {
-      // 1. Generate final summary
-      const summaryText = await callGemini(SYSTEM_PROMPT_SUMMARY, contents);
+      // 1. Try Gemini first, fallback to robust local summary generator
+      let summaryText = await callGeminiSafe(SYSTEM_PROMPT_SUMMARY, contents, {
+        temperature: 0.1,
+        maxOutputTokens: 500,
+        timeoutMs: 6000,
+      });
+
+      if (!summaryText || summaryText.length < 20) {
+        summaryText = generateLocalTriageSummary(messages);
+      }
 
       // 2. Fetch patient profile to save the session
       const patient = await prisma.patientProfile.findUnique({
@@ -115,13 +89,35 @@ export async function POST(request: NextRequest) {
         summary: summaryText,
       });
     } else {
-      // Just continue the chat session
-      const reply = await callGemini(SYSTEM_PROMPT_CHAT, contents);
+      // Chat conversation: Try Gemini first, fallback to clinical rule-based triage
+      let reply = await callGeminiSafe(SYSTEM_PROMPT_CHAT, contents, {
+        temperature: 0.2,
+        maxOutputTokens: 250,
+        timeoutMs: 5000,
+      });
+
+      if (!reply) {
+        reply = generateLocalTriageReply(messages);
+      }
+
       return NextResponse.json({ reply });
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal Server Error";
     console.error("Symptom checker API error:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Even on error, provide a helpful triage reply instead of crashing
+    try {
+      const { messages, conclude } = await request.json();
+      if (conclude) {
+        const fallbackSummary = generateLocalTriageSummary(messages || []);
+        return NextResponse.json({ success: true, summary: fallbackSummary });
+      }
+      const fallbackReply = generateLocalTriageReply(messages || []);
+      return NextResponse.json({ reply: fallbackReply });
+    } catch {
+      return NextResponse.json(
+        { error: "An unexpected error occurred. Please try again." },
+        { status: 500 }
+      );
+    }
   }
 }

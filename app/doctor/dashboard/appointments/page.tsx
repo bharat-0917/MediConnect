@@ -15,7 +15,7 @@ import {
   Phone,
   Mail
 } from "lucide-react";
-import { acceptAppointment, declineAppointment } from "@/app/actions/appointment";
+import { acceptAppointment, declineAppointment, saveConsultationNotes } from "@/app/actions/appointment";
 
 const isJoinable = (appt: Appointment) => {
   if (appt.status !== "CONFIRMED" || appt.type !== "VIRTUAL") return false;
@@ -56,6 +56,9 @@ export default function DoctorAppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [completingAppt, setCompletingAppt] = useState<Appointment | null>(null);
+  const [consultNotes, setConsultNotes] = useState("");
+  const [completeLoading, setCompleteLoading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -139,6 +142,26 @@ export default function DoctorAppointmentsPage() {
       console.error(err);
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  const handleSaveCompletion = async () => {
+    if (!session?.user?.id || !completingAppt || !consultNotes.trim()) return;
+    setCompleteLoading(true);
+    try {
+      const res = await saveConsultationNotes(session.user.id, completingAppt.id, consultNotes);
+      if (res.success) {
+        setCompletingAppt(null);
+        setConsultNotes("");
+        fetchAppointments();
+      } else {
+        alert(res.error || "Failed to finalize consultation");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An unexpected error occurred");
+    } finally {
+      setCompleteLoading(false);
     }
   };
 
@@ -330,22 +353,34 @@ export default function DoctorAppointmentsPage() {
                           + Write Prescription
                         </Link>
                       </div>
+
+                      {/* Direct Complete Consultation Action */}
+                      <button
+                        onClick={() => {
+                          setCompletingAppt(appt);
+                          setConsultNotes("");
+                        }}
+                        className="w-full py-2.5 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-center text-xs transition-all shadow-warm-sm flex items-center justify-center gap-1.5 mb-2"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#E0F2E7]" />
+                        <span>Complete Visit & Finalize Notes</span>
+                      </button>
                     </div>
 
                     {appt.type === "VIRTUAL" && appt.status === "CONFIRMED" && (
-                      <div className="mt-2">
+                      <div className="mt-1">
                         {isJoinable(appt) ? (
                           <Link
                             href={`/consultation/${appt.id}`}
-                            className="block w-full py-3 bg-[#042618] hover:bg-[#073824] text-white text-center font-bold rounded-2xl text-xs transition-all shadow-warm-sm flex items-center justify-center gap-2"
+                            className="block w-full py-2.5 bg-[#E0F2E7] hover:bg-[#D0EBD9] text-[#042618] text-center font-bold rounded-2xl text-xs transition-all shadow-warm-sm flex items-center justify-center gap-2 border border-[#C1E5D0]"
                           >
-                            <Video className="w-4 h-4 text-[#E0F2E7]" />
-                            <span>Join Video Consultation</span>
+                            <Video className="w-4 h-4 text-[#042618]" />
+                            <span>Join Video Consultation Room</span>
                           </Link>
                         ) : isBeforeJoinTime(appt) ? (
                           <button
                             disabled
-                            className="w-full py-3 bg-stone-100 border border-stone-200 text-stone-500 font-bold rounded-2xl text-xs cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-stone-100 border border-stone-200 text-stone-500 font-bold rounded-2xl text-xs cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             <Clock className="w-3.5 h-3.5" />
                             <span>Opens 10m before scheduled time</span>
@@ -353,7 +388,7 @@ export default function DoctorAppointmentsPage() {
                         ) : (
                           <button
                             disabled
-                            className="w-full py-3 bg-stone-100 text-stone-400 font-bold rounded-2xl text-xs cursor-not-allowed"
+                            className="w-full py-2.5 bg-stone-100 text-stone-400 font-bold rounded-2xl text-xs cursor-not-allowed"
                           >
                             Consultation Closed
                           </button>
@@ -365,6 +400,69 @@ export default function DoctorAppointmentsPage() {
               </div>
             )}
           </section>
+
+          {/* Complete Consultation Modal */}
+          {completingAppt && (
+            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white border border-stone-200/80 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-warm-lg space-y-5 animate-in fade-in zoom-in-95">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#E0F2E7] text-[#042618] flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5 text-[#0F3824]" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-base text-[#042618]">Finalize Consultation</h3>
+                      <p className="text-stone-500 text-xs">Patient: {completingAppt.patient.user.name}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setCompletingAppt(null)}
+                    className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center text-sm font-bold"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="bg-stone-50 p-3.5 rounded-2xl border border-stone-200/60 text-xs text-stone-700 space-y-1">
+                  <span className="font-bold text-stone-800 block">Reason for Visit:</span>
+                  <p className="italic">&ldquo;{completingAppt.reasonForVisit}&rdquo;</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-stone-800">
+                    Clinical Notes & Summary <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={consultNotes}
+                    onChange={(e) => setConsultNotes(e.target.value)}
+                    placeholder="Enter diagnosis, clinical observations, recommendations, or instructions given to patient..."
+                    className="w-full bg-stone-50/70 border border-stone-200 rounded-2xl p-3.5 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:bg-white focus:border-[#042618] resize-none"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCompletingAppt(null)}
+                    disabled={completeLoading}
+                    className="flex-1 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-2xl text-xs transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveCompletion}
+                    disabled={completeLoading || !consultNotes.trim()}
+                    className="flex-1 py-3 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs transition-all shadow-warm-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#E0F2E7]" />
+                    <span>{completeLoading ? "Finalizing..." : "Mark as Completed"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* History Section */}
           <section>

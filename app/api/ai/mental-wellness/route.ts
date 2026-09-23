@@ -1,6 +1,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  callGeminiSafe,
+  generateLocalWellnessReply,
+  GeminiContentPart,
+} from "@/lib/gemini";
 
 const SYSTEM_PROMPT_WELLNESS = `
 You are a supportive, non-judgmental wellness listener for MediConnect. 
@@ -19,45 +24,6 @@ CRITICAL RULES:
 3. Keep conversational responses warm, concise, and focused on supportive listening, mindfulness, general coping strategies (e.g. deep breathing, physical movement), and encouraging them to reach out to professional therapists if needed.
 `;
 
-interface GeminiContentPart {
-  role: string;
-  parts: { text: string }[];
-}
-
-async function callGemini(systemPrompt: string, contents: GeminiContentPart[]) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("Missing GEMINI_API_KEY in environment variables");
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      contents,
-      systemInstruction: {
-        parts: [{ text: systemPrompt }],
-      },
-      generationConfig: {
-        temperature: 0.5,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Gemini API error details:", errorText);
-    throw new Error(`Gemini API failed with status ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-}
-
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session || !session.user) {
@@ -71,19 +37,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid messages format" }, { status: 400 });
     }
 
-    // Map messages to Gemini API format
     const contents: GeminiContentPart[] = messages.map((msg: { role: string; content: string }) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.content }],
     }));
 
-    // 1. Fetch AI response
-    const reply = await callGemini(SYSTEM_PROMPT_WELLNESS, contents);
+    // Try Gemini API first, fallback to supportive local wellness engine
+    let reply = await callGeminiSafe(SYSTEM_PROMPT_WELLNESS, contents, {
+      temperature: 0.4,
+      maxOutputTokens: 300,
+      timeoutMs: 5000,
+    });
 
-    // Append AI response to messages array to write to DB
+    if (!reply) {
+      reply = generateLocalWellnessReply(messages);
+    }
+
     const completeMessages = [...messages, { role: "model", content: reply }];
 
-    // 2. Fetch patient profile to save the session
+    // Fetch patient profile to save the session
     const patient = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
     });
@@ -95,7 +67,6 @@ export async function POST(request: NextRequest) {
     let activeSessionId = sessionId;
 
     if (activeSessionId) {
-      // Update existing session
       await prisma.mentalHealthSession.update({
         where: { id: activeSessionId },
         data: {
@@ -103,7 +74,6 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      // Create new session
       const newSession = await prisma.mentalHealthSession.create({
         data: {
           patientId: patient.id,
@@ -115,8 +85,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ reply, sessionId: activeSessionId });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal Server Error";
     console.error("Mental wellness API error:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    try {
+      const { messages } = await request.json();
+      const fallbackReply = generateLocalWellnessReply(messages || []);
+      return NextResponse.json({ reply: fallbackReply });
+    } catch {
+      return NextResponse.json(
+        { error: "An unexpected error occurred. Please try again." },
+        { status: 500 }
+      );
+    }
   }
 }

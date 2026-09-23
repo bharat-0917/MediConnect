@@ -20,8 +20,24 @@ import {
   HeartPulse,
   CheckCircle2,
   Stethoscope,
-  Plus
+  Plus,
+  User,
+  X
 } from "lucide-react";
+
+interface PatientProfile {
+  id: string;
+  dateOfBirth: string;
+  gender: string;
+  bloodGroup: string | null;
+  emergencyContact: string;
+  address: string | null;
+  user: {
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+  };
+}
 
 interface Appointment {
   id: string;
@@ -85,6 +101,8 @@ export default function PatientDashboard() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [labReports, setLabReports] = useState<LabReport[]>([]);
   const [accessLogs, setAccessLogs] = useState<AccessLogEntry[]>([]);
+  const [profile, setProfile] = useState<PatientProfile | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -119,11 +137,12 @@ export default function PatientDashboard() {
   const fetchData = async () => {
     if (session?.user?.id) {
       try {
-        const [apptRes, prescRes, labRes, logsRes] = await Promise.all([
+        const [apptRes, prescRes, labRes, logsRes, profileRes] = await Promise.all([
           fetch(`/api/patient/appointments?userId=${session.user.id}`),
           fetch(`/api/patient/prescriptions`),
           fetch(`/api/patient/lab-reports`),
           fetch(`/api/patient/access-logs`),
+          fetch(`/api/patient/profile`),
         ]);
 
         if (apptRes.ok) {
@@ -141,6 +160,10 @@ export default function PatientDashboard() {
         if (logsRes.ok) {
           const logsData = await logsRes.json();
           setAccessLogs(Array.isArray(logsData) ? logsData : []);
+        }
+        if (profileRes.ok) {
+          const profData = await profileRes.json();
+          setProfile(profData);
         }
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
@@ -222,7 +245,15 @@ export default function PatientDashboard() {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#E0F2E7] hover:bg-[#D0EBD9] text-[#042618] font-bold rounded-2xl text-xs transition-all border border-[#C1E5D0] shadow-warm-sm hover:shadow-warm-md"
+            >
+              <User className="w-4 h-4 text-[#042618]" />
+              <span>Patient Details</span>
+            </button>
+
             <Link
               href="/patient/dashboard/find-doctor"
               className="flex items-center gap-2 px-5 py-2.5 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs transition-all shadow-warm-sm hover:shadow-warm-md"
@@ -678,6 +709,94 @@ export default function PatientDashboard() {
             </div>
           )}
         </section>
+
+        {/* Patient Demographics Modal */}
+        {showProfileModal && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white border border-stone-200/80 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-warm-lg space-y-6 animate-in fade-in zoom-in-95">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#E0F2E7] text-[#042618] flex items-center justify-center shadow-warm-sm">
+                    <User className="w-5 h-5 text-[#0F3824]" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-[#042618]">Patient Demographics Card</h3>
+                    <p className="text-stone-500 text-xs">Personal health & contact details on file</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center text-sm font-bold transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {profile ? (
+                <div className="bg-stone-50/70 border border-stone-200/80 rounded-2xl p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 text-xs">
+                    <div>
+                      <span className="text-stone-500 block mb-1 font-medium">Date of Birth</span>
+                      <span className="text-stone-900 font-bold text-sm">
+                        {profile.dateOfBirth
+                          ? new Date(profile.dateOfBirth).toLocaleDateString(undefined, {
+                              month: "numeric",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                          : "Not specified"}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-stone-500 block mb-1 font-medium">Gender</span>
+                      <span className="text-stone-900 font-bold text-sm">{profile.gender || "Not specified"}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-stone-500 block mb-1 font-medium">Blood Group</span>
+                      <span className="text-stone-900 font-bold text-sm">{profile.bloodGroup || "Not specified"}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-stone-500 block mb-1 font-medium">Emergency Contact</span>
+                      <span className="text-stone-900 font-bold text-sm">{profile.emergencyContact || "Not specified"}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-stone-500 block mb-1 font-medium">Contact Phone</span>
+                      <span className="text-stone-900 font-bold text-sm">{profile.user.phone || "Not specified"}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-stone-500 block mb-1 font-medium">Email Address</span>
+                      <span className="text-stone-900 font-bold text-sm">{profile.user.email || "Not specified"}</span>
+                    </div>
+
+                    <div className="sm:col-span-2 border-t border-stone-200/60 pt-4 mt-1">
+                      <span className="text-stone-500 block mb-1 font-medium">Home Address</span>
+                      <span className="text-stone-900 font-bold text-sm">{profile.address || "Not specified"}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 text-center text-stone-500 text-xs">
+                  Loading patient profile information...
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-stone-100 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowProfileModal(false)}
+                  className="px-6 py-2.5 bg-[#042618] hover:bg-[#073824] text-white font-bold rounded-2xl text-xs transition-all shadow-warm-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
