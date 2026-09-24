@@ -11,8 +11,10 @@ import {
   ShieldCheck, 
   ArrowLeft, 
   Brain,
-  FileCheck
+  FileCheck,
+  History
 } from "lucide-react";
+import PatientMedicalRecordSection, { MedicalRecordItem } from "./PatientMedicalRecordSection";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -113,6 +115,7 @@ interface ConsolidatedRecordViewProps {
   symptomSessions: SymptomSessionRow[];
   metrics: MetricRow[];
   vaccines: VaccineRow[];
+  medicalRecords?: MedicalRecordItem[];
 }
 
 export default function ConsolidatedRecordView({
@@ -123,9 +126,10 @@ export default function ConsolidatedRecordView({
   symptomSessions,
   metrics,
   vaccines,
+  medicalRecords = [],
 }: ConsolidatedRecordViewProps) {
   const [activeTab, setActiveTab] = useState<
-    "profile" | "appointments" | "prescriptions" | "labs" | "symptoms" | "vitals" | "vaccines"
+    "profile" | "medical-history" | "appointments" | "prescriptions" | "labs" | "symptoms" | "vitals" | "vaccines"
   >("profile");
 
   const parsedGoals = patient.goals ? JSON.parse(patient.goals) : {};
@@ -190,6 +194,7 @@ export default function ConsolidatedRecordView({
         <div className="flex flex-wrap gap-2 border-b border-stone-200/80 pb-4 mb-8 shrink-0">
           {[
             { id: "profile", label: "Profile & Demographics", icon: User },
+            { id: "medical-history", label: "Patient Medical Record (PMR)", icon: History },
             { id: "appointments", label: "Appointments", icon: Calendar },
             { id: "prescriptions", label: "Prescriptions", icon: Pill },
             { id: "labs", label: "Lab Reports", icon: FileText },
@@ -202,7 +207,7 @@ export default function ConsolidatedRecordView({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as "profile" | "appointments" | "prescriptions" | "labs" | "symptoms" | "vitals" | "vaccines")}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-2xl border transition-all ${
                   isActive
                     ? "bg-[#042618] text-white border-[#042618] shadow-warm-sm"
@@ -218,6 +223,16 @@ export default function ConsolidatedRecordView({
 
         {/* Tab Contents */}
         <div className="flex-grow">
+          {/* PATIENT MEDICAL RECORD (PMR) TAB */}
+          {activeTab === "medical-history" && (
+            <PatientMedicalRecordSection
+              patientId={patient.id}
+              patientName={patient.user.name || "Patient"}
+              initialRecords={medicalRecords}
+              allowAdd={true}
+            />
+          )}
+
           {/* PROFILE TAB */}
           {activeTab === "profile" && (
             <div className="max-w-3xl space-y-6">

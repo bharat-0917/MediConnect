@@ -16,6 +16,12 @@ interface PatientProfileData {
     email: string | null;
     phone: string | null;
   };
+  medicalRecords?: Array<{
+    id: string;
+    title: string;
+    category: string;
+    status: string;
+  }>;
 }
 
 interface DownloadCardButtonProps {
@@ -131,18 +137,33 @@ export default function DownloadCardButton({ profile, canvasId = "patient-card-q
         doc.text(valText, 46, y + 3.8);
       });
 
-      // Address at bottom
-      const addrY = 62;
+      // Address & PMR Summary at bottom
+      const addrY = 60;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(5.5);
       doc.setTextColor(130, 130, 130);
       doc.text("HOME ADDRESS", 8, addrY);
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
+      doc.setFontSize(6.5);
       doc.setTextColor(40, 40, 40);
       const splitAddress = doc.splitTextToSize(profile.address || "Not specified", 74);
-      doc.text(splitAddress, 8, addrY + 3.5);
+      doc.text(splitAddress[0] || "Not specified", 8, addrY + 3.2);
+
+      // PMR Medical History Alert Line if records exist
+      if (profile.medicalRecords && profile.medicalRecords.length > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(5);
+        doc.setTextColor(190, 24, 24);
+        const conditionTitles = profile.medicalRecords.slice(0, 2).map((r) => r.title).join(", ");
+        const moreCount = profile.medicalRecords.length > 2 ? ` (+${profile.medicalRecords.length - 2} more)` : "";
+        doc.text(`PMR CLINICAL ALERTS: ${conditionTitles}${moreCount}`, 8, addrY + 7.5);
+      } else {
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(5);
+        doc.setTextColor(120, 120, 120);
+        doc.text("PMR: Medical history logged digitally via verified practitioner portal.", 8, addrY + 7.5);
+      }
 
       // Card Body Right: QR Code Box
       doc.setFillColor(255, 255, 255);

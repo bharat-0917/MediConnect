@@ -104,6 +104,7 @@ model DoctorProfile {
   appointments        Appointment[]
   prescriptions       Prescription[]
   accessLogs          AccessLog[]
+  medicalRecords      MedicalRecord[]
 }
 
 model PatientProfile {
@@ -129,6 +130,7 @@ model PatientProfile {
   metrics          HealthMetric[]
   vaccines         VaccineRecord[]
   accessLogs       AccessLog[]
+  medicalRecords   MedicalRecord[]
 
   @@index([guardianUserId])
 }
@@ -319,3 +321,28 @@ model AccessLog {
   @@index([doctorId])
   @@index([patientId])
 }
+
+model MedicalRecord {
+  id            String         @id @default(cuid())
+  patientId     String
+  patient       PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId      String
+  doctor        DoctorProfile  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  // Category: "SURGERY_OPERATION" | "CHRONIC_CONDITION" | "RARE_CONDITION" | "PAST_DISEASE" | "ALLERGY" | "OTHER"
+  category      String
+  
+  title         String         // e.g. "Appendectomy", "Type 2 Diabetes Mellitus", "Hypertension", "Guillain-Barré Syndrome"
+  description   String         // Clinical details, findings, outcome, medication notes
+  dateOccurred  DateTime       // When the surgery happened or condition was diagnosed
+  status        String         @default("RESOLVED") // "ONGOING" | "RESOLVED" | "MANAGED" | "CRITICAL"
+  hospital      String?        // Hospital or clinic where it occurred / was diagnosed
+  attachments   String?        // JSON string array of file URLs if any
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId])
+}
+

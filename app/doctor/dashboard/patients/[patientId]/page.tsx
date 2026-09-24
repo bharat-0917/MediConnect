@@ -136,6 +136,22 @@ export default async function DoctorConsolidatedPatientRecordPage({ params }: Pa
     orderBy: { scheduledDate: "asc" },
   });
 
+  const medicalRecords = await prisma.medicalRecord.findMany({
+    where: { patientId },
+    include: {
+      doctor: {
+        include: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { dateOccurred: "desc" },
+  });
+
   return (
     <ConsolidatedRecordView
       patient={patient}
@@ -145,6 +161,7 @@ export default async function DoctorConsolidatedPatientRecordPage({ params }: Pa
       symptomSessions={symptomSessions}
       metrics={metrics}
       vaccines={vaccines}
+      medicalRecords={medicalRecords}
     />
   );
 }

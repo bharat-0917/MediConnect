@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
   });
 
   // Fetch all clinical data
-  const [appointments, prescriptions, labReports, symptomSessions, metrics, vaccines] =
+  const [appointments, prescriptions, labReports, symptomSessions, metrics, vaccines, medicalRecords] =
     await Promise.all([
       prisma.appointment.findMany({
         where: { patientId: patient.id },
@@ -94,6 +94,17 @@ export async function GET(req: NextRequest) {
         where: { patientId: patient.id },
         orderBy: { scheduledDate: "asc" },
       }),
+      prisma.medicalRecord.findMany({
+        where: { patientId: patient.id },
+        include: {
+          doctor: {
+            include: {
+              user: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { dateOccurred: "desc" },
+      }),
     ]);
 
   return NextResponse.json({
@@ -104,5 +115,6 @@ export async function GET(req: NextRequest) {
     symptomSessions,
     metrics,
     vaccines,
+    medicalRecords: medicalRecords || [],
   });
 }

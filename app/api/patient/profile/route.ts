@@ -19,6 +19,18 @@ export async function GET() {
             phone: true,
           },
         },
+        medicalRecords: {
+          include: {
+            doctor: {
+              include: {
+                user: {
+                  select: { name: true },
+                },
+              },
+            },
+          },
+          orderBy: { dateOccurred: "desc" },
+        },
       },
     });
 

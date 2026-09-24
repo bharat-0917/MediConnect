@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, QrCode, ScanLine, AlertCircle, Loader2, User, Calendar, Pill, FileText, Activity, ShieldCheck, Brain, FileCheck } from "lucide-react";
+import { X, QrCode, ScanLine, AlertCircle, Loader2, User, Calendar, Pill, FileText, Activity, ShieldCheck, Brain, FileCheck, History } from "lucide-react";
 import Link from "next/link";
+import PatientMedicalRecordSection, { MedicalRecordItem } from "./patients/[patientId]/PatientMedicalRecordSection";
 
 /* ─────────────────────────────────────────────────────── */
 /*  Types (mirrors ConsolidatedRecordView shapes)          */
@@ -54,6 +55,7 @@ interface ScanResult {
   symptomSessions: SymptomSessionRow[];
   metrics: MetricRow[];
   vaccines: VaccineRow[];
+  medicalRecords?: MedicalRecordItem[];
 }
 
 /* ─────────────────────────────────────────────────────── */
@@ -69,7 +71,7 @@ export default function QRScannerModal({ onClose }: QRScannerModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-  const [activeTab, setActiveTab] = useState<"profile" | "appointments" | "prescriptions" | "labs" | "symptoms">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "medical-history" | "appointments" | "prescriptions" | "labs" | "symptoms">("profile");
   const [cameraReady, setCameraReady] = useState(false);
   const scannerRef = useRef<unknown>(null);
   const scannerDivId = "qr-scanner-container";
@@ -204,6 +206,7 @@ export default function QRScannerModal({ onClose }: QRScannerModalProps) {
               <div className="flex flex-wrap gap-2 border-b border-stone-200/80 pb-4">
                 {[
                   { id: "profile", label: "Profile", icon: User },
+                  { id: "medical-history", label: "Patient Medical Record (PMR)", icon: History },
                   { id: "appointments", label: "Appointments", icon: Calendar },
                   { id: "prescriptions", label: "Prescriptions", icon: Pill },
                   { id: "labs", label: "Lab Reports", icon: FileText },
@@ -227,6 +230,16 @@ export default function QRScannerModal({ onClose }: QRScannerModalProps) {
                   );
                 })}
               </div>
+
+              {/* PMR Tab Content */}
+              {activeTab === "medical-history" && (
+                <PatientMedicalRecordSection
+                  patientId={scanResult.patient.id}
+                  patientName={scanResult.patient.user.name || "Patient"}
+                  initialRecords={scanResult.medicalRecords || []}
+                  allowAdd={true}
+                />
+              )}
 
               {/* Tab Content */}
               {activeTab === "profile" && (

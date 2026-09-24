@@ -43,6 +43,20 @@ interface PatientProfile {
     email: string | null;
     phone: string | null;
   };
+  medicalRecords?: Array<{
+    id: string;
+    category: string;
+    title: string;
+    description: string;
+    dateOccurred: string;
+    status: string;
+    hospital?: string | null;
+    doctor?: {
+      user?: {
+        name: string | null;
+      } | null;
+    } | null;
+  }>;
 }
 
 interface Appointment {
@@ -841,6 +855,47 @@ export default function PatientDashboard() {
                           <span>All scans are securely recorded and visible in your EHR Access History.</span>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Patient Medical Record (PMR) History in Health Card */}
+                    <div className="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-warm-sm space-y-3">
+                      <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <History className="w-4 h-4 text-[#042618]" />
+                          <span className="text-xs font-bold text-[#042618] uppercase tracking-wide">
+                            Medical History &amp; Past Conditions (PMR)
+                          </span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E0F2E7] text-[#042618] font-bold">
+                          {profile.medicalRecords && profile.medicalRecords.length > 0
+                            ? `${profile.medicalRecords.length} Recorded`
+                            : "Doctor Managed"}
+                        </span>
+                      </div>
+
+                      {profile.medicalRecords && profile.medicalRecords.length > 0 ? (
+                        <div className="space-y-2.5">
+                          {profile.medicalRecords.map((mr) => (
+                            <div key={mr.id} className="p-3 bg-stone-50 rounded-xl border border-stone-200/70 text-xs space-y-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-bold text-[#042618]">{mr.title}</span>
+                                <span className="text-[10px] text-stone-400 font-mono">
+                                  {new Date(mr.dateOccurred).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                                </span>
+                              </div>
+                              <p className="text-stone-600 text-[11px] leading-relaxed">{mr.description}</p>
+                              <div className="flex items-center justify-between pt-1 text-[10px] text-stone-400">
+                                <span>{mr.hospital || "Medical Clinic"}</span>
+                                <span className="font-semibold text-emerald-700">Status: {mr.status}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-stone-400 italic py-1">
+                          No major surgeries, chronic conditions, or rare diseases recorded yet. Doctors can record these during your appointments or walk-in QR scans.
+                        </p>
+                      )}
                     </div>
                   </>
                 ) : (
