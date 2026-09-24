@@ -27,8 +27,9 @@ import {
   QrCode
 } from "lucide-react";
 
-// Dynamically import QR code (client-only, avoids SSR issues)
+// Dynamically import QR code and Download card components (client-only, avoids SSR issues)
 const PatientQRCode = dynamic(() => import("./PatientQRCode"), { ssr: false });
+const DownloadCardButton = dynamic(() => import("./DownloadCardButton"), { ssr: false });
 
 interface PatientProfile {
   id: string;
@@ -731,15 +732,20 @@ export default function PatientDashboard() {
                   </div>
                   <div>
                     <h3 className="font-bold text-base text-[#042618]">Patient Health Card</h3>
-                    <p className="text-stone-500 text-xs">Personal details &amp; scan QR code</p>
+                    <p className="text-stone-500 text-xs">Personal details &amp; physical print card</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowProfileModal(false)}
-                  className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center transition-all shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2.5">
+                  {profile && (
+                    <DownloadCardButton profile={profile} />
+                  )}
+                  <button
+                    onClick={() => setShowProfileModal(false)}
+                    className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center transition-all shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* ── Scrollable Body ── */}
@@ -747,77 +753,92 @@ export default function PatientDashboard() {
 
                 {profile ? (
                   <>
-                    {/* Demographics grid — compact */}
-                    <div className="bg-stone-50/80 border border-stone-200/70 rounded-2xl p-5">
-                      <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs">
-                        <div>
-                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Date of Birth</span>
-                          <span className="text-stone-900 font-bold text-sm">
-                            {profile.dateOfBirth
-                              ? new Date(profile.dateOfBirth).toLocaleDateString(undefined, { month: "numeric", day: "numeric", year: "numeric" })
-                              : "Not specified"}
-                          </span>
+                    {/* Patient Health Card with Demographics & Embedded QR */}
+                    <div className="bg-stone-50/90 border border-stone-200/80 rounded-2xl p-5 shadow-warm-sm relative overflow-hidden">
+                      {/* Top strip of the card */}
+                      <div className="flex items-center justify-between border-b border-stone-200/60 pb-3 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#042618]">Patient Identity Card</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E0F2E7] text-[#042618] font-bold">Verified</span>
                         </div>
-                        <div>
-                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Gender</span>
-                          <span className="text-stone-900 font-bold text-sm">{profile.gender || "Not specified"}</span>
+                        <span className="text-[10px] font-mono text-stone-400">ID: {profile.id}</span>
+                      </div>
+
+                      {/* Main card content: Demographics + Integrated QR */}
+                      <div className="flex flex-col md:flex-row gap-6 items-start">
+                        {/* Demographics details grid */}
+                        <div className="flex-1 grid grid-cols-2 gap-y-4 gap-x-6 text-xs">
+                          <div>
+                            <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Date of Birth</span>
+                            <span className="text-stone-900 font-bold text-sm">
+                              {profile.dateOfBirth
+                                ? new Date(profile.dateOfBirth).toLocaleDateString(undefined, { month: "numeric", day: "numeric", year: "numeric" })
+                                : "Not specified"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Gender</span>
+                            <span className="text-stone-900 font-bold text-sm">{profile.gender || "Not specified"}</span>
+                          </div>
+                          <div>
+                            <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Blood Group</span>
+                            <span className="text-stone-900 font-bold text-sm">{profile.bloodGroup || "Not specified"}</span>
+                          </div>
+                          <div>
+                            <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Emergency Contact</span>
+                            <span className="text-stone-900 font-bold text-sm">{profile.emergencyContact || "Not specified"}</span>
+                          </div>
+                          <div>
+                            <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Phone</span>
+                            <span className="text-stone-900 font-bold text-sm">{profile.user.phone || "Not specified"}</span>
+                          </div>
+                          <div>
+                            <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Email</span>
+                            <span className="text-stone-900 font-bold text-sm truncate">{profile.user.email || "Not specified"}</span>
+                          </div>
+                          <div className="col-span-2 border-t border-stone-200/60 pt-3">
+                            <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Home Address</span>
+                            <span className="text-stone-900 font-bold text-sm">{profile.address || "Not specified"}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Blood Group</span>
-                          <span className="text-stone-900 font-bold text-sm">{profile.bloodGroup || "Not specified"}</span>
-                        </div>
-                        <div>
-                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Emergency Contact</span>
-                          <span className="text-stone-900 font-bold text-sm">{profile.emergencyContact || "Not specified"}</span>
-                        </div>
-                        <div>
-                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Phone</span>
-                          <span className="text-stone-900 font-bold text-sm">{profile.user.phone || "Not specified"}</span>
-                        </div>
-                        <div>
-                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Email</span>
-                          <span className="text-stone-900 font-bold text-sm truncate">{profile.user.email || "Not specified"}</span>
-                        </div>
-                        <div className="col-span-2 border-t border-stone-200/60 pt-3">
-                          <span className="text-stone-400 block mb-0.5 font-medium uppercase tracking-wide text-[10px]">Home Address</span>
-                          <span className="text-stone-900 font-bold text-sm">{profile.address || "Not specified"}</span>
+
+                        {/* Integrated QR inside this card */}
+                        <div className="w-full md:w-auto shrink-0 flex flex-col items-center justify-center p-3.5 bg-white border border-[#C1E5D0] rounded-2xl shadow-warm-sm">
+                          <PatientQRCode
+                            patientId={profile.id}
+                            patientName={profile.user.name || "Patient"}
+                            size={120}
+                            canvasId="patient-card-qr-canvas"
+                            showDetails={false}
+                          />
+                          <span className="text-[10px] font-bold text-[#042618] mt-2 tracking-wide uppercase">Scan For Records</span>
+                          <span className="text-[9px] text-stone-400 font-mono">Digital EHR Access</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* QR Code — side-by-side on sm+, stacked on mobile */}
+                    {/* QR Code Walk-in Instructions & Download Banner */}
                     <div className="bg-[#F0F9F3] border border-[#C1E5D0] rounded-2xl p-5">
-                      <div className="flex items-center gap-2 mb-4">
-                        <QrCode className="w-4 h-4 text-[#042618]" />
-                        <span className="text-xs font-bold text-[#042618] uppercase tracking-wide">Health Card QR Code</span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-[#C1E5D0]/60">
+                        <div className="flex items-center gap-2">
+                          <QrCode className="w-4 h-4 text-[#042618]" />
+                          <span className="text-xs font-bold text-[#042618] uppercase tracking-wide">Physical Health Card Print / Walk-in</span>
+                        </div>
+                        <DownloadCardButton profile={profile} />
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
-                        {/* QR Code image */}
-                        <div className="shrink-0 p-3 bg-white border border-[#C1E5D0] rounded-2xl shadow-warm-sm">
-                          <PatientQRCode
-                            patientId={profile.id}
-                            patientName={profile.user.name || "Patient"}
-                          />
+                      <div className="space-y-2 text-xs text-stone-600">
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+                          <span>Download or print this card to keep a physical copy in your wallet.</span>
                         </div>
-
-                        {/* Instructions */}
-                        <div className="flex flex-col justify-center gap-3 text-xs text-stone-600 sm:pt-2">
-                          <div className="flex items-start gap-2">
-                            <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
-                            <span>Open MediConnect on the doctor&apos;s device</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
-                            <span>Tap <strong>&ldquo;Scan Patient QR&rdquo;</strong> in their dashboard header</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
-                            <span>Point the camera at this QR code — your full health record loads instantly</span>
-                          </div>
-                          <p className="text-[11px] text-stone-400 mt-1 italic leading-relaxed border-t border-[#C1E5D0] pt-2">
-                            Every scan is audit-logged and visible in your EHR Access History.
-                          </p>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+                          <span>During clinic or hospital walk-ins, doctors tap <strong>&ldquo;Scan Patient QR&rdquo;</strong> to view your clinical chart.</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#042618] text-white flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
+                          <span>All scans are securely recorded and visible in your EHR Access History.</span>
                         </div>
                       </div>
                     </div>
@@ -830,7 +851,12 @@ export default function PatientDashboard() {
               </div>
 
               {/* ── Sticky Footer ── */}
-              <div className="px-6 py-4 border-t border-stone-100 flex justify-end shrink-0">
+              <div className="px-6 py-4 border-t border-stone-100 flex items-center justify-between shrink-0">
+                <div>
+                  {profile && (
+                    <DownloadCardButton profile={profile} />
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowProfileModal(false)}
